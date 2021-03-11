@@ -46,6 +46,7 @@ public:
 
         if (end_of_stream_reached) throw std::runtime_error("String EOS already reached.");
 
+        /*
         // Edge case for WS
         if (str[pos] == ' '){
             ++pos;
@@ -66,7 +67,7 @@ public:
             }
             line_go_through(old_pos, pos);
             return { {TOKEN_TYPE::COMMENT_LINE , " " } };
-        }
+        } */
 
         token resulting_token {};
         size_t next_stream_pos = 0;
@@ -86,12 +87,12 @@ public:
             }
         }
 
-        size_t old_pos = pos;
-        pos = next_stream_pos;
 
-        if (pos >= str.size() - 1) end_of_stream_reached = true;
 
         if (got_token){
+            size_t old_pos = pos;
+            pos = next_stream_pos;
+            if (pos >= str.size() - 1) end_of_stream_reached = true;
             line_go_through(old_pos, pos);
             return resulting_token;
         }

@@ -42,8 +42,6 @@ public:
     int64_t state_count = 0;
 
     int64_t get_transition(const int64_t state, const char terminal) const{
-        if (terminal == ' ') return -1;
-
         try{
             return jump_map.at(terminal)[state];
         }

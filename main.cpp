@@ -60,10 +60,22 @@ void T_lexer_test(){
     jump_table floats;
     floats.add_sequence_of_rules(std::vector{c2, c3, c4}, TOKEN_TYPE::CONSTANT_FP);
 
-    std::string test_string {"0 #This is a comment\n"
+    // Table for comments
+    rule d1 { RULE_TYPE::ONE_CHAR, RULE_QUALIFIER::ONE_TIME , {'/'} };
+    rule d2 { RULE_TYPE::ANY_OF_SEQUENCE_AND, RULE_QUALIFIER::ZERO_OR_MORE , {0, 0x0A - 1, 0x0A + 1, INT8_MAX - 1} };
+    rule d3 { RULE_TYPE::ONE_CHAR, RULE_QUALIFIER::ONE_TIME , {0x0A} };
+    jump_table comments;
+    comments.add_sequence_of_rules(std::vector{d1, d1, d2, d3}, TOKEN_TYPE::COMMENT_LINE);
+
+    // Table for whitespaces
+    rule ws { RULE_TYPE::ONE_CHAR, RULE_QUALIFIER::ZERO_OR_MORE , {' '} };;
+    jump_table whitespace;
+    whitespace.add_sequence_of_rules(std::vector{ws}, TOKEN_TYPE::PURE_WS);
+
+    std::string test_string {"01 //aa\n"
                              "for 111 Abracadabra 1.1"};
 
-    std::vector all_tables {keywords, identifiers, floats, integers};
+    std::vector all_tables {whitespace, comments, keywords, identifiers, floats, integers};
     token_reader tr { test_string, all_tables};
 
     while (!tr.string_eos_reached()){
@@ -74,9 +86,9 @@ void T_lexer_test(){
             break;
         }
         else{
-            if (result.value().type != TOKEN_TYPE::PURE_WS && result.value().type != TOKEN_TYPE::COMMENT_LINE){
+            //if (result.value().type != TOKEN_TYPE::PURE_WS && result.value().type != TOKEN_TYPE::COMMENT_LINE){
                 std::cout << result.value().type << ' ' << result.value().attribute << std::endl;
-            }
+            //}
         }
     }
 }
