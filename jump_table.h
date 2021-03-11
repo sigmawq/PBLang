@@ -5,6 +5,8 @@
 #ifndef LEXER_TEST_JUMP_TABLE_H
 #define LEXER_TEST_JUMP_TABLE_H
 
+#include <vector>
+
 enum RULE_TYPE {
 
     // Single char - for example: p will be accepted by state machine
@@ -88,7 +90,13 @@ public:
 
     void set_accepting(const int64_t state_id, TOKEN_TYPE to_return){
         if_is_accepting_state_array[state_id] = true;
-        accepting_state_token_type.at(state_id) = to_return;
+
+        try{
+            accepting_state_token_type.at(state_id) = to_return;
+        }
+        catch (std::out_of_range &e){
+            accepting_state_token_type.emplace(state_id, to_return);
+        }
     }
 
     // Returns new state ID
@@ -110,12 +118,14 @@ public:
         return state_count - 1;
     }
 
+    // Add terminal to jump. Nothing will happen if @terminal already exists.
     void add_terminal(const char terminal){
-        jump_map.emplace(terminal, std::vector<int64_t>{});
-        auto& vec = jump_map.at(terminal);
-        vec.resize(state_count);
-        std::fill(vec.begin(), vec.end(), -1);
-
+        auto inserted_if = jump_map.try_emplace(terminal, std::vector<int64_t>{});
+        if (inserted_if.second){
+            auto &vec = inserted_if.first->second;
+            vec.resize(state_count);
+            std::fill(vec.begin(), vec.end(), -1);
+        }
     }
 
     void add_keyword(const std::string &keyword, const TOKEN_TYPE token_type) {
@@ -156,7 +166,10 @@ public:
         set_transition(current_state, letter, final_state);
     }
 
-    void add_sequence_of_rules(std::vector<rule> &rules, TOKEN_TYPE output){
+    void add_sequence_of_rules(std::vector<rule> const& rules, TOKEN_TYPE output){
+        // Check A
+        if (rules.empty()) throw std::runtime_error("No rules defined");
+
         auto add_transition_with_char_group = [&](std::vector<char> &char_grp, int64_t source_state, int64_t target_state){
             for (char c : char_grp){
                 this->set_transition(source_state, c, target_state);
@@ -197,9 +210,12 @@ public:
                         throw std::runtime_error("Incomplete sequence in rule that implies multiple sequences");
                     }
                     else{
+
                         int k = 0;
-                        for (char left = r.container[k]; left < r.container[k+1]; left++){
-                            char_group_allowed.push_back(left);
+                        while (k+1 <= r.container.size()){
+                            for (char left = r.container[k]; left <= r.container[k+1]; left++){
+                                char_group_allowed.push_back(left);
+                            }
                             k += 2;
                         }
                     }
@@ -208,12 +224,22 @@ public:
                     throw std::runtime_error("Rule is undefined");
             }
 
+            // Add terminal sequence to jump map
+            for (char c : char_group_allowed){
+                this->add_terminal(c);
+            }
+
             // Resolve current fallthrough
             // Fallthrough - is the process to going till the last before the last element in fallthrough
             // and connecting them one by
             // one to the current state. The last state is excluded because it's connection is handled in usual way.
-            for (int i = 0; i < fallthrough_group.size() - 1; i++){
-                add_transition_with_char_group(char_group_allowed, fallthrough_group[i], current_state);
+
+            if (!fallthrough_group.empty()){
+                for (int i = 0; i < fallthrough_group.size() - 1; i++){
+                    add_transition_with_char_group(char_group_allowed, fallthrough_group[i], current_state);
+                }
+
+                if (r.qualifier == RULE_QUALIFIER::ONE_TIME) fallthrough_group.clear();
             }
 
             // Add current state to fallthrough group if is followed by <zero_or_more> or is <zero_or_more>
@@ -224,6 +250,7 @@ public:
                 fallthrough_group.push_back(current_state);
             }
             else {
+                // Note: Check A ensures that |rules| >= 1. Thus (|rules| - 1) > 0.
                 if (i != rules.size() - 1){
                     if (rules[i+1].qualifier == ZERO_OR_MORE){
                         fallthrough_group.push_back(current_state);
@@ -233,7 +260,6 @@ public:
 
             switch (r.qualifier) {
                 case ONE_TIME:
-                    fallthrough_group.clear();
                     add_transition_with_char_group(char_group_allowed, old_state, current_state);
                     break;
                 case ZERO_OR_MORE:
@@ -248,6 +274,43 @@ public:
         // to the end of stream.
         for (auto state : fallthrough_group){
             this->set_accepting(state, output);
+        }
+        this->set_accepting(current_state, output);
+    }
+
+    struct token_stream_data{
+        token resulting_token;
+        size_t stream_ended_at;
+    };
+
+    // Returns empty optional if no valid token found
+    // Otherwise the structure contains resulting token and EOS index
+    std::optional<token_stream_data> analyze_string(std::string const& str, size_t start_at) const {
+        size_t stream_pos = start_at;
+        int64_t current_state = 0;
+
+        int64_t last_accepting_state = -1;
+        size_t last_accepting_state_stream_pos = 0;
+
+        for (stream_pos; stream_pos < str.size(); stream_pos++) {
+            int64_t next_transition = this->get_transition(current_state, str[stream_pos]);
+            if (next_transition != -1) {
+                current_state = next_transition;
+                if (this->if_is_accepting_state_array.at(current_state)){
+                    last_accepting_state = current_state;
+                    last_accepting_state_stream_pos = stream_pos;
+                }
+            }
+            else break;
+        }
+
+        if (last_accepting_state == -1){
+            return {};
+        }
+        else{
+            TOKEN_TYPE token_type = this->get_accepting_state_token(last_accepting_state);
+            std::string token_attribute { str, start_at, last_accepting_state_stream_pos - start_at + 1 };
+            return { {{ token_type, token_attribute }, last_accepting_state_stream_pos + 1} };
         }
     }
 

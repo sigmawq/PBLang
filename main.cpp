@@ -36,19 +36,48 @@ void T_lexer_test(){
     keywords.add_keyword(")", SPECIAL_CHARACTER);
     keywords.add_keyword("foreach", KEYWORD);
 
-    // Rule for identifiers
-    rule a1 { RULE_TYPE::ANY_OF_SEQUENCE_AND, RULE_QUALIFIER::ONE_TIME, { 'a', 'b', 'A', 'B' } };
+    // Table for identifiers
+    rule a1 { RULE_TYPE::ANY_OF_SEQUENCE_AND, RULE_QUALIFIER::ONE_TIME, { 'a', 'z', 'A', 'Z' } };
     rule a2 { RULE_TYPE::ANY_OF_SEQUENCE_AND, RULE_QUALIFIER::ZERO_OR_MORE,
-              { 'a', 'b', 'A', 'B', '1', '9' } };
+              { 'a', 'z', 'A', 'Z', '1', '9' } };
     jump_table identifiers; // TODO
+    identifiers.add_sequence_of_rules(std::vector{a1, a2}, TOKEN_TYPE::IDENTIFIER);
 
-    std::string test_string {"foreach (lambda = for)"};
+    // Table for integers
+    rule b1 { RULE_TYPE::ANY_OF_SEQUENCE, RULE_QUALIFIER::ONE_TIME, {'1', '9'} };
+    rule b2 { RULE_TYPE::ANY_OF_SEQUENCE, RULE_QUALIFIER::ZERO_OR_MORE , {'0', '9'} };
+    rule zero_rule { RULE_TYPE::ONE_CHAR, RULE_QUALIFIER::ONE_TIME , {'0'} };
 
-    token_reader tr { test_string, std::vector{keywords, identifiers} };
+    jump_table integers;
+    integers.add_sequence_of_rules(std::vector{b1, b2}, TOKEN_TYPE::CONSTANT_INTEGER);
+    integers.add_sequence_of_rules(std::vector{zero_rule}, TOKEN_TYPE::CONSTANT_INTEGER);
 
-    while (tr.if_still_got_stuff()){
-        auto result = tr.next_token();
-        std::cout << result.type << ' ' << result.attribute << std::endl;
+    // Table for floats
+    rule c2 { RULE_TYPE::ANY_OF_SEQUENCE, RULE_QUALIFIER::ZERO_OR_MORE , {'0', '9'} };
+    rule c3 { RULE_TYPE::ONE_CHAR, RULE_QUALIFIER::ONE_TIME , {'.'} };
+    rule c4 { RULE_TYPE::ANY_OF_SEQUENCE, RULE_QUALIFIER::ZERO_OR_MORE , {'0', '9'} };
+
+    jump_table floats;
+    floats.add_sequence_of_rules(std::vector{c2, c3, c4}, TOKEN_TYPE::CONSTANT_FP);
+
+    std::string test_string {"0 #This is a comment\n"
+                             "for 111 Abracadabra 1.1"};
+
+    std::vector all_tables {keywords, identifiers, floats, integers};
+    token_reader tr { test_string, all_tables};
+
+    while (!tr.string_eos_reached()){
+        auto result = tr.read_next_token();
+        if (!result.has_value()){
+            auto pos = tr.get_position();
+            std::cout << "Unrecognized token at " << pos.first << ", " << pos.second << std::endl;
+            break;
+        }
+        else{
+            if (result.value().type != TOKEN_TYPE::PURE_WS && result.value().type != TOKEN_TYPE::COMMENT_LINE){
+                std::cout << result.value().type << ' ' << result.value().attribute << std::endl;
+            }
+        }
     }
 }
 
@@ -161,11 +190,11 @@ void T_grammar_test(){
     pt.D_out();
 
     std::vector<token> tok_stream{
-            {TOKEN_TYPE::CONSTANT, "2"},
-            {TOKEN_TYPE::CONSTANT, "+"},
-            {TOKEN_TYPE::CONSTANT, "1"},
-            {TOKEN_TYPE::CONSTANT, "*"},
-            {TOKEN_TYPE::CONSTANT, "3"},
+            {TOKEN_TYPE::CONSTANT_INTEGER, "2"},
+            {TOKEN_TYPE::CONSTANT_INTEGER, "+"},
+            {TOKEN_TYPE::CONSTANT_INTEGER, "1"},
+            {TOKEN_TYPE::CONSTANT_INTEGER, "*"},
+            {TOKEN_TYPE::CONSTANT_INTEGER, "3"},
     };
 
     auto tok_stream_gu = tok_stream_to_gu(universe, tok_stream);
@@ -175,7 +204,8 @@ void T_grammar_test(){
 }
 
 int main() {
-    T_grammar_test();
+    T_lexer_test();
+    //T_grammar_test();
     return 0;
 }
 

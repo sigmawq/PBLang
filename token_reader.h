@@ -7,111 +7,96 @@
 
 #include <utility>
 #include <algorithm>
+#include "pbl_utility.h"
 
-class token_reader {
-    std::string string_to_read;
-    size_t position = 0;
+// Uses an array of jump tables to tokenize input string.
+// The longest lexeme is picked.
+// If some jump tables produce token with the same length, the topmost will have priority
 
-    std::vector<jump_table> jump_table_group;
+class token_reader{
+    std::string const& str;
+    std::vector<jump_table> const& tables;
+    size_t pos = 0;
+    std::string err_msg;
+    size_t line = 0;
+    size_t line_index = 0;
 
-    // Returns token for provided jump table and first-after position in given string
-    static std::pair<TOKEN_TYPE, int64_t>
-    get_token_type(const jump_table &jt, const std::string &str, const size_t from){
+    bool end_of_stream_reached = false;
+public:
+    token_reader(std::string const& str, std::vector<jump_table> const& jump_tables) : str(str), tables(jump_tables) {}
 
-        // Returns first accepting state found while iterating backwards.
-        auto unwind_transition_sequence = [&jt](const std::vector<int64_t> &transition_sequence, size_t &index) -> int64_t{
-            for (int64_t i = transition_sequence.size() - 1; i >= 0; i--){
-                if (jt.is_accepting(transition_sequence[i])){
-                    return transition_sequence[i];
+    bool string_eos_reached() const { return end_of_stream_reached; }
+
+    [[nodiscard]] std::pair<size_t, size_t> get_position()  const { return std::pair<size_t, size_t>{ line, line_index }; };
+
+    // Return an empty optional if stream is invalid according to provided tables
+    // Hardcoded to recognize comments & whitespaces and return them as tokens (user of this function should take care of ignoring them)
+    std::optional<token> read_next_token(){
+
+        // Goes through @str to increment reader's @line and @line_index
+        auto line_go_through = [&](size_t from, size_t to){
+            for (size_t i = from; i <= to; i++){
+                if (str[i] == '\n') {
+                    ++line;
+                    line_index = 0;
                 }
-                else index--;
+                else ++line_index;
             }
-            return -1;
         };
 
-        std::vector<int64_t> transition_sequence;
-        size_t index = from;
-        int64_t current_state = 0;
-        transition_sequence.push_back(current_state);
+        if (end_of_stream_reached) throw std::runtime_error("String EOS already reached.");
 
-        while (index < str.size()){
-            current_state = jt.get_transition(current_state, str[index]);
-            if (current_state == -1){
-                break;
+        // Edge case for WS
+        if (str[pos] == ' '){
+            ++pos;
+            if (pos == str.size() - 1) end_of_stream_reached = true;
+            return { {TOKEN_TYPE::PURE_WS , " " } };
+        }
+
+        // Edge case for comments
+        else if (str[pos] == '#'){
+            size_t old_pos = pos;
+            auto res = pbl_utility::find_str_symbol(str, pos, str.size() - 1, '\n');
+            if (!res.has_value() || pos == str.size() - 1){
+                end_of_stream_reached = true;
             }
-            transition_sequence.push_back(current_state);
-            index++;
-        }
-
-        int64_t accepting_state = unwind_transition_sequence(transition_sequence, index);
-        if (accepting_state == -1){
-            return std::make_pair<TOKEN_TYPE, int64_t>(INVALID, index);
-        }
-        else{
-            return std::make_pair<TOKEN_TYPE, int64_t>(jt.get_accepting_state_token(accepting_state), index);
-        }
-    }
-
-    // Involve several jump tables to calculate next token. The longest lexeme will be chosen.
-    // Returns new position in the string
-    [[nodiscard]] std::pair<token, size_t> jump_table_compete(size_t start) const{
-
-        token tok { INVALID, ""};
-        size_t max_token_position = 0;
-
-        for (const auto& jt : jump_table_group){
-            auto next = get_token_type(jt, string_to_read, position);
-            if (next.second > max_token_position){
-                max_token_position = next.second;
-
-                auto str_offset = (size_t)next.second - position;
-                tok = {next.first, std::string { string_to_read, position, str_offset }};
+            else {
+                pos = res.value();
+                ++pos;
             }
+            line_go_through(old_pos, pos);
+            return { {TOKEN_TYPE::COMMENT_LINE , " " } };
         }
 
-        return std::pair<token, size_t> {tok, max_token_position};
-    }
+        token resulting_token {};
+        size_t next_stream_pos = 0;
+        size_t max_token_length = 0;
 
-public:
-
-    [[nodiscard]] bool if_still_got_stuff() const{
-        return (position < string_to_read.size());
-    }
-
-    void reset_position() { position = 0; }
-
-    // Throws std::runtime_error if an invalid token has been encountered
-    token next_token() {
-        auto result = jump_table_compete(position);
-
-        if (result.first.type == INVALID) {
-            std::string msg = "Invalid token at ";
-            msg += std::to_string(position);
-            msg += " (Start symbol ";
-            msg += string_to_read[position];
-            msg += ")";
-            throw std::runtime_error(msg);
-        }
-
-        position = result.second;
-
-        // Advance to next non-whitespace symbol
-        bool still_has_symbols = false;
-        for (position; position < string_to_read.size(); position++){
-            if (string_to_read[position] != ' ') {
-                still_has_symbols = true;
-                break;
+        bool got_token = false;
+        for (const auto &t : tables){
+            auto next_table_output = t.analyze_string(str, pos);
+            if (next_table_output.has_value()){
+                got_token = true;
+                size_t token_length = next_table_output.value().stream_ended_at - pos;
+                if (token_length > max_token_length){
+                    resulting_token = next_table_output.value().resulting_token;
+                    max_token_length = token_length;
+                    next_stream_pos = next_table_output.value().stream_ended_at;
+                }
             }
         }
-        if (!still_has_symbols) position = string_to_read.size();
-        return result.first;
-    }
-public:
-    token_reader(const std::string &str, const std::vector<jump_table> &jump_table_group)
-    : string_to_read(str), jump_table_group(jump_table_group), position(0)
-    {}
 
-    // TODO: Remove comments
+        size_t old_pos = pos;
+        pos = next_stream_pos;
+
+        if (pos >= str.size() - 1) end_of_stream_reached = true;
+
+        if (got_token){
+            line_go_through(old_pos, pos);
+            return resulting_token;
+        }
+        else return {};
+    }
 };
 
 #endif //LEXER_TEST_TOKEN_READER_H
