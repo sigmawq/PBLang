@@ -32,9 +32,17 @@ public:
         }
     }
 
-    parse_table(std::vector<const grammar_unit*> &terminals, std::vector<const grammar_unit*> &non_terminals,
+    parse_table(std::vector<grammar_unit> &universe,
                 std::vector<predict_set_record> &predict_set,
                 std::unordered_map<const grammar_unit*, follow_set> &follow_set_val){
+
+
+        std::vector<const grammar_unit*> terminals;
+        std::vector<const grammar_unit*> non_terminals;
+        for (const auto &gu : universe){
+            if (gu.terminal) terminals.push_back(&gu);
+            else non_terminals.push_back(&gu);
+        }
 
         for (int i = 0; i < non_terminals.size(); i++){
             auto inserted = table.insert({non_terminals[i], {}}).first;

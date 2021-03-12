@@ -18,6 +18,8 @@
 #include "parse_table.h"
 #include "parse_string.h"
 #include "parse_tree.h"
+#include "pbl_utility.h"
+#include "parse_operations.h"
 
 void T_lexer_test(){
     jump_table keywords;
@@ -76,21 +78,9 @@ void T_lexer_test(){
                              "for 111 Abracadabra 1.1"};
 
     std::vector all_tables {whitespace, comments, keywords, identifiers, floats, integers};
-    token_reader tr { test_string, all_tables};
+    //token_reader tr { test_string, all_tables};
 
-    while (!tr.string_eos_reached()){
-        auto result = tr.read_next_token();
-        if (!result.has_value()){
-            auto pos = tr.get_position();
-            std::cout << "Unrecognized token at " << pos.first << ", " << pos.second << std::endl;
-            break;
-        }
-        else{
-            //if (result.value().type != TOKEN_TYPE::PURE_WS && result.value().type != TOKEN_TYPE::COMMENT_LINE){
-                std::cout << result.value().type << ' ' << result.value().attribute << std::endl;
-            //}
-        }
-    }
+
 }
 
 void tabs_out(int tabs){
@@ -108,42 +98,28 @@ void tree_out(parse_tree &tree, parse_node &root, int tabs = 0){
     }
 }
 
-std::vector<const grammar_unit*> tok_stream_to_gu(std::vector<grammar_unit> &universe, std::vector<token> &tok_stream){
-    std::vector<const grammar_unit*> gu_tok_stream;
-
-    for (const auto &el : tok_stream) {
-        auto result = std::find_if(universe.begin(), universe.end(), [&](const grammar_unit &gu) {
-            return (gu.string_representation == el.attribute);
-        });
-        if (result == universe.end()) throw std::runtime_error("One token has not been found in universe set");
-        gu_tok_stream.push_back(&*result.base());
-    }
-
-    return gu_tok_stream;
-}
-
-void T_grammar_test(){
+/*void T_grammar_test(){
     std::vector<grammar_unit> universe;
+
+    // Non terminals
     universe.push_back({false, "STMT"});
-    universe.push_back({false, "DIGIT"});
-    universe.push_back({true, "1"});
-    universe.push_back({true, "2"});
-    universe.push_back({true, "3"});
-    universe.push_back({true, "4"});
-    universe.push_back({true, "5"});
-    universe.push_back({true, "6"});
-    universe.push_back({true, "7"});
-    universe.push_back({true, "8"});
-    universe.push_back({true, "9"});
-    universe.push_back({true, "+"});
-    universe.push_back({true, "-"});
-    universe.push_back({true, "*"});
-    universe.push_back({true, "/"});
     universe.push_back({false, "EXPR"});
     universe.push_back({false, "TERM"});
     universe.push_back({false, "EXPR_P"});
     universe.push_back({false, "TERM_P"});
     universe.push_back({false, "FACTOR"});
+
+    // Terminals
+    universe.push_back({true, "+"});
+    universe.push_back({true, "-"});
+    universe.push_back({true, "*"});
+    universe.push_back({true, "/"});
+
+    universe.push_back({true, "<NUMBER>"});
+    universe.back().mark_as_number();
+
+    universe.push_back({true, "<IDENTIFIER>"});
+    universe.back().mark_as_identifier();
 
 
     std::vector<std::pair<std::string, std::vector<std::string>>> productions_raw{
@@ -151,23 +127,19 @@ void T_grammar_test(){
             {"STMT",         {"EXPR"}},
 
             // Arithmetic expr group
+
             {"EXPR",         {"TERM", "EXPR_P"}},
+
             {"EXPR_P",         {"+", "TERM", "EXPR_P"}},
             {"EXPR_P",         {" "}},
+
             {"TERM",          {"FACTOR", "TERM_P"}},
+
             {"TERM_P",         {"*", "FACTOR", "TERM_P"}},
             {"TERM_P",         {" "}},
-            {"FACTOR",         {"DIGIT"}},
 
-            {"DIGIT",        {"1"}},
-            {"DIGIT",        {"2"}},
-            {"DIGIT",        {"3"}},
-            {"DIGIT",        {"4"}},
-            {"DIGIT",        {"5"}},
-            {"DIGIT",        {"6"}},
-            {"DIGIT",        {"7"}},
-            {"DIGIT",        {"8"}},
-            {"DIGIT",        {"9"}},
+            {"FACTOR",         {"<IDENTIFIER>"}},
+            {"FACTOR",         {"<NUMBER>"}}
     };
 
     auto productions = grammar::parse_productions(universe, productions_raw);
@@ -203,20 +175,30 @@ void T_grammar_test(){
 
     std::vector<token> tok_stream{
             {TOKEN_TYPE::CONSTANT_INTEGER, "2"},
-            {TOKEN_TYPE::CONSTANT_INTEGER, "+"},
+            {TOKEN_TYPE::OPERATOR, "+"},
             {TOKEN_TYPE::CONSTANT_INTEGER, "1"},
-            {TOKEN_TYPE::CONSTANT_INTEGER, "*"},
+            {TOKEN_TYPE::OPERATOR, "*"},
             {TOKEN_TYPE::CONSTANT_INTEGER, "3"},
     };
 
-    auto tok_stream_gu = tok_stream_to_gu(universe, tok_stream);
+    auto tok_stream_gu = bind_token_to_universe(universe, tok_stream);
 
     auto tree = parse_string(tok_stream_gu, start_symbol, pt);
     tree.D_out();
-}
+}*/
 
 int main() {
-    T_lexer_test();
+    std::string source = "1+1";
+
+    auto tokenizer_data = prepare_tokenizer();
+
+    parse_data pd;
+    prepare_parse(pd);
+
+    auto parse_tree = parse_source(tokenizer_data, pd, source);
+    tree_out(parse_tree, parse_tree.get_root());
+
+    //T_lexer_test();
     //T_grammar_test();
     return 0;
 }

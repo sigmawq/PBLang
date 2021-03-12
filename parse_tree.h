@@ -7,6 +7,11 @@
 
 #include "grammar.h"
 
+struct bound_token{
+    const token &token_value;
+    const grammar_unit *gu;
+};
+
 struct parse_node {
     const grammar_unit &gu;
     std::vector<size_t> children;

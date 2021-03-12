@@ -11,7 +11,7 @@
 #include "parse_tree.h"
 
 // Returns a parse tree
-parse_tree parse_string(std::vector<const grammar_unit*> &token_stream,
+parse_tree parse_string(std::vector<bound_token> &token_stream,
                         const grammar_unit *start_symbol, parse_table &pt){
 
     parse_tree tree { *start_symbol };
@@ -34,7 +34,7 @@ parse_tree parse_string(std::vector<const grammar_unit*> &token_stream,
         if (top_stack_node.gu.terminal){
             if (out_of_range_tok_stream) throw std::runtime_error("Token stream out of range, but another terminal encountered");
 
-            if (&(top_stack_node.gu) == token_stream[token_stream_index]){
+            if (&(top_stack_node.gu) == token_stream[token_stream_index].gu){
                 ++token_stream_index;
                 continue;
             }
@@ -50,7 +50,7 @@ parse_tree parse_string(std::vector<const grammar_unit*> &token_stream,
                 rec = pt.at_dollar(&top_stack_node.gu);
             }
             else {
-                rec = pt.at(&top_stack_node.gu, token_stream[token_stream_index]);
+                rec = pt.at(&top_stack_node.gu, token_stream[token_stream_index].gu);
             }
 
             if (!rec.has_value()) throw std::runtime_error("Syntax error");

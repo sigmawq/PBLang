@@ -15,7 +15,7 @@
 
 class token_reader{
     std::string const& str;
-    std::vector<jump_table> const& tables;
+    std::vector<std::reference_wrapper<jump_table>> tables;
     size_t pos = 0;
     std::string err_msg;
     size_t line = 0;
@@ -23,7 +23,7 @@ class token_reader{
 
     bool end_of_stream_reached = false;
 public:
-    token_reader(std::string const& str, std::vector<jump_table> const& jump_tables) : str(str), tables(jump_tables) {}
+    token_reader(std::string const& str, std::vector<std::reference_wrapper<jump_table>> jump_tables) : str(str), tables(jump_tables) {}
 
     bool string_eos_reached() const { return end_of_stream_reached; }
 
@@ -75,7 +75,7 @@ public:
 
         bool got_token = false;
         for (const auto &t : tables){
-            auto next_table_output = t.analyze_string(str, pos);
+            auto next_table_output = t.get().analyze_string(str, pos);
             if (next_table_output.has_value()){
                 got_token = true;
                 size_t token_length = next_table_output.value().stream_ended_at - pos;
@@ -92,7 +92,7 @@ public:
         if (got_token){
             size_t old_pos = pos;
             pos = next_stream_pos;
-            if (pos >= str.size() - 1) end_of_stream_reached = true;
+            if (pos > str.size() - 1) end_of_stream_reached = true;
             line_go_through(old_pos, pos);
             return resulting_token;
         }

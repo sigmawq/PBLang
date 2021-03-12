@@ -20,6 +20,37 @@ namespace pbl_utility{
         }
         return {};
     }
+
+    void _str_compose(std::string& str) { }
+
+    template<typename Head, typename ...Tail>
+    void _str_compose(std::string& str, Head h, Tail... t){
+        str += h;
+        _str_compose(str, t...);
+    }
+
+    template<typename ...Args>
+    void str_compose(std::string& str, Args... args){
+        _str_compose(str, args...);
+    }
+
+    template<typename ...Args>
+    void debug_print(std::string& str, Args... args){
+#ifdef DEBUG_MODE
+        std::string message;
+        str_compose(message, args...);
+        std::cout << message;
+#endif
+    }
+
+    template<typename ...Args>
+    void debug_print_nl(Args... args){
+#ifdef DEBUG_MODE
+        std::string message;
+        str_compose(message, args...);
+        std::cout << message << std::endl;
+#endif
+    }
 }
 
 #endif //LEXER_TEST_PBL_UTILITY_H
