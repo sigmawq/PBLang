@@ -35,21 +35,21 @@ parse_tree parse_string(std::vector<bound_token> &token_stream,
             if (out_of_range_tok_stream) {
                 std::string err = "Unexpected end of stream, expected: ";
                 pbl_utility::str_compose(err, top_stack_node.gu.string_representation);
-                throw std::runtime_error("Token stream out of range, but another terminal encountered");
+                throw std::runtime_error(err);
             }
 
             if (&(top_stack_node.gu) == token_stream[token_stream_index].gu){
                 if ((&top_stack_node)->gu.is_number || (&top_stack_node)->gu.is_identifier){
-                    top_stack_node.set_opt_val(token_stream[token_stream_index].token_value.attribute);
+                    top_stack_node.set_token(token_stream[token_stream_index].token_value);
                 }
                 ++token_stream_index;
                 continue;
             }
-            else{
+            else {
                 std::string err = "Unexpected token at (TODO), expected: ";
                 pbl_utility::str_compose(err, top_stack_node.gu.string_representation, " but found ",
                                          token_stream[token_stream_index].gu->string_representation);
-                throw std::runtime_error("Next terminal failed to compare");
+                throw std::runtime_error(err);
             }
         }
 

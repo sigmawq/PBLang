@@ -28,11 +28,14 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("if", KEYWORD);
     tokenizer_data.keywords.add_keyword("else", KEYWORD);
     tokenizer_data.keywords.add_keyword("var", KEYWORD);
+    tokenizer_data.keywords.add_keyword("def", KEYWORD);
+    tokenizer_data.keywords.add_keyword("return", KEYWORD);
     tokenizer_data.keywords.add_keyword("bool", KEYWORD);
     tokenizer_data.keywords.add_keyword("char", KEYWORD);
     tokenizer_data.keywords.add_keyword("int", KEYWORD);
     tokenizer_data.keywords.add_keyword("float", KEYWORD);
     tokenizer_data.keywords.add_keyword("double", KEYWORD);
+    tokenizer_data.keywords.add_keyword("overload", KEYWORD);
     tokenizer_data.keywords.add_keyword("=", OPERATOR);
     tokenizer_data.keywords.add_keyword("<", OPERATOR);
     tokenizer_data.keywords.add_keyword("<=", OPERATOR);
@@ -47,6 +50,10 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("(", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword(")", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword(";", SPECIAL_CHARACTER);
+    tokenizer_data.keywords.add_keyword(":", SPECIAL_CHARACTER);
+    tokenizer_data.keywords.add_keyword(",", SPECIAL_CHARACTER);
+    tokenizer_data.keywords.add_keyword("{", SPECIAL_CHARACTER);
+    tokenizer_data.keywords.add_keyword("}", SPECIAL_CHARACTER);
 
     // Table for identifiers
     rule a1 { RULE_TYPE::ANY_OF_SEQUENCE_AND, RULE_QUALIFIER::ONE_TIME, { 'a', 'z', 'A', 'Z' } };
@@ -166,9 +173,16 @@ void prepare_parse(parse_data &pd){
         universe.push_back({false, "ASSIGNMENT"});
         universe.push_back({false, "OPT_ASSIGNMENT"});
         universe.push_back({false, "VAR_DECL"});
+        universe.push_back({false, "ARG_DECL"});
         universe.push_back({false, "TYPE_SPEC"});
-
-
+        universe.push_back({false, "F_DECL"});
+        universe.push_back({false, "F_CALL"});
+        universe.push_back({false, "OPT_ARG_START"});
+        universe.push_back({false, "OPT_ARG_TAIL"});
+        universe.push_back({false, "F_DECL_OVERLOAD"});
+        universe.push_back({false, "ARG_CALL_s"});
+        universe.push_back({false, "ARG_CALL"});
+        universe.push_back({false, "OPT_F_CALL"});
 
     // ** TERMINALS **
         // Arithmetic
@@ -227,6 +241,8 @@ void prepare_parse(parse_data &pd){
         universe.push_back({true, "["});
         universe.push_back({true, "]"});
         universe.push_back({true, ";"});
+        universe.push_back({true, ":"});
+        universe.push_back({true, ","});
 
         // Dynamic terminals
         universe.push_back({true, "<NUMBER>"});
@@ -243,6 +259,9 @@ void prepare_parse(parse_data &pd){
             {"STMT",         {"A_Es", ";", "STMT"}},
             {"STMT",         {";"}},
             {"STMT",         {"VAR_DECL", ";", "STMT"}},
+            {"STMT",         {"F_DECL", "STMT"}},
+            {"STMT",         {"F_DECL_OVERLOAD", "STMT"}},
+            {"STMT",         {"F_CALL", ";", "STMT"}},
 
             // Block segment is defined by opening '{' and closing '}'
             {"STMT",         {"BLOCK_SEGMENT"}},
@@ -257,11 +276,12 @@ void prepare_parse(parse_data &pd){
             {"A_E",         {"||", "F", "A_E"}},
             {"A_E",         {"&&", "F", "A_E"}},
             {"A_E",         {"!", "F", "A_E"}},
-            {"A_E",         {"/", "F", "A_E"}},
             {"A_E",         {" "}},
 
             // Variable declaration
             {"VAR_DECL", {"var", "TYPE_SPEC", "<IDENTIFIER>", "OPT_ASSIGNMENT"}},
+                // Used for functions
+            {"ARG_DECL", {"TYPE_SPEC", "<IDENTIFIER>"}},
 
             // Type Specifier
             {"TYPE_SPEC",         {"int"}},
@@ -269,6 +289,21 @@ void prepare_parse(parse_data &pd){
             {"TYPE_SPEC",         {"float"}},
             {"TYPE_SPEC",         {"bool"}},
             {"TYPE_SPEC",         {"char"}},
+            {"TYPE_SPEC",         {"arr"}},
+            {"TYPE_SPEC",         {"struct"}},
+
+            // Function declaration
+            {"F_DECL",         {"def", "<IDENTIFIER>", "(", "OPT_ARG_START", "OPT_ARG_TAIL", ":", "TYPE_SPEC", ")", "BLOCK_SEGMENT"}},
+            {"F_DECL_OVERLOAD",         {"overload", "def", "<IDENTIFIER>", "(", "OPT_ARG_START", "OPT_ARG_TAIL", ":", "TYPE_SPEC", ")", "BLOCK_SEGMENT"}},
+            {"OPT_ARG_START",         {"ARG_DECL"}},
+            {"OPT_ARG_TAIL",         {"," ,"ARG_DECL", "OPT_ARG_TAIL"}},
+            {"OPT_ARG_TAIL",         {" "}},
+
+            // Arguments for function call
+            {"ARG_CALL_s",         {" "}},
+            {"ARG_CALL_s",         {"A_Es", "ARG_CALL"}},
+            {"ARG_CALL",         {",", "A_Es", "ARG_CALL"}},
+            {"ARG_CALL",         {" "}},
 
             // Assignment
                 // Mandatory
@@ -279,9 +314,11 @@ void prepare_parse(parse_data &pd){
                 {"OPT_ASSIGNMENT", {" "}},
 
 
-            {"F",         {"<IDENTIFIER>"}},
+            {"F",         {"<IDENTIFIER>", "OPT_F_CALL"}},
             {"F",         {"<NUMBER>"}},
-            {"F",         {"(" ,"A_Es", ")"}}
+            {"F",         {"(" ,"A_Es", ")"}},
+            {"OPT_F_CALL",         {"(" ,"ARG_CALL_s", ")"}},
+            {"OPT_F_CALL",         {" "}}
     };
 
     pd.productions = grammar::parse_productions(universe, productions_raw);

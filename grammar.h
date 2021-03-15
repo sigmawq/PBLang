@@ -114,6 +114,22 @@ struct predict_set_record{
         }
         std::cout << std::endl;
     }
+
+    [[nodiscard]] std::string to_string() const {
+        std::string result;
+        result += this->lhs->string_representation;
+        result += " -> ";
+        if (this->prod.has_value()){
+            for (auto &thing : this->prod.value().get().content){
+                result += thing->string_representation;
+                result += " ";
+            }
+        }
+        else {
+            result += " epsilon ";
+        }
+        return result;
+    }
 };
 
 class grammar{

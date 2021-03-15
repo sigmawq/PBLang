@@ -10,7 +10,6 @@ class parse_table{
     std::unordered_map<const grammar_unit*,
         std::unordered_map<const grammar_unit*, std::optional<predict_set_record>>> table;
         std::unordered_map<const grammar_unit*, std::optional<predict_set_record>> dollar_column;
-
 public:
     // Return no value if cell has no valid production
     std::optional<predict_set_record>& at(const grammar_unit *row, const grammar_unit *column){
@@ -30,6 +29,32 @@ public:
         catch (std::out_of_range &e) {
             throw std::runtime_error("Requested non-existing record from parse table");
         }
+    }
+
+    void add_record(const grammar_unit *row, const grammar_unit *column, predict_set_record const& psr){
+        auto &result = this->at(row, column);
+#ifdef DEBUG_MODE
+        if (result.has_value()){
+            std::string err;
+            pbl_utility::str_compose(err, "Parse table: ", " at row ", row->string_representation, " column ", column->string_representation,
+                                     ", adding production: [", psr.to_string(), " ] would replace production: [", result.value().to_string(), "]", '\n');
+            throw std::runtime_error(err);
+        }
+#endif
+        result.emplace(psr);
+    }
+
+    void add_record_eos(const grammar_unit *row, predict_set_record const& psr){
+        auto &result = this->at_dollar(row);
+#ifdef DEBUG_MODE
+        if (result.has_value()){
+            std::string err;
+            pbl_utility::str_compose(err, "Parse table: ", " at row ", row->string_representation, " column EOS",
+                                     ", adding production: [", psr.to_string(), " ] would replace production: [", result.value().to_string(), "]", '\n');
+            throw std::runtime_error(err);
+        }
+#endif
+        result.emplace(psr);
     }
 
     parse_table(std::vector<grammar_unit> &universe,
@@ -56,22 +81,19 @@ public:
 
             // Rule 1
             for (const grammar_unit *gu : psr.fs.content){
-                this->at(psr.lhs, gu) = psr;
+                add_record(psr.lhs, gu, psr);
             }
 
             // Rule 2
             auto follow_set_used = follow_set_val.at(psr.lhs);
             if (psr.fs.has_epsilon || psr.is_epsilon_prod()){
-                // Handle pure epsilon production\
-
                 for (const grammar_unit *gu : follow_set_used.content){
-                    this->at(psr.lhs, gu) = psr;
+                    add_record(psr.lhs, gu, psr);
                 }
                 if (follow_set_used.has_dollar){
-                    this->dollar_column.at(psr.lhs) = psr;
+                    add_record_eos(psr.lhs, psr);
                 }
             }
-
         }
     }
 

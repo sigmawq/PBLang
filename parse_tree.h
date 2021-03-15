@@ -15,16 +15,15 @@ struct bound_token{
 struct parse_node {
     const grammar_unit &gu;
 
-    // Optional value to hold data (numbers, identifiers)
-    std::string opt_val;
+    std::optional<token> optional_token;
     std::vector<size_t> children;
 
     void add_child_node(size_t another_node){
         children.push_back(another_node);
     }
 
-    void set_opt_val(std::string const& opt_val){
-        this->opt_val = opt_val;
+    void set_token(token const& other){
+        optional_token = other;
     }
 };
 
@@ -64,8 +63,8 @@ public:
     }
 
     // Returns reference to newly appended parse node
-    size_t add_grammar_unit_to_parse_node(const size_t source_index, const grammar_unit &new_child, std::string opt_val = ""){
-        nodes.push_back({new_child, opt_val});
+    size_t add_grammar_unit_to_parse_node(const size_t source_index, const grammar_unit &new_child){
+        nodes.push_back({new_child});
         nodes[source_index].add_child_node(nodes.size() - 1);
         return nodes.size() - 1;
     }
