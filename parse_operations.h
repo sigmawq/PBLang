@@ -16,7 +16,7 @@ struct tokenizer_data{
     jump_table whitespace;
 
     std::vector<std::reference_wrapper<jump_table>> get_in_array_form(){
-        return { whitespace, comments, floats, integers, keywords, identifiers };
+        return { whitespace, comments, floats, integers, keywords,  identifiers};
     }
 };
 
@@ -27,7 +27,12 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("while", KEYWORD);
     tokenizer_data.keywords.add_keyword("if", KEYWORD);
     tokenizer_data.keywords.add_keyword("else", KEYWORD);
-    tokenizer_data.keywords.add_keyword("lambda", KEYWORD);
+    tokenizer_data.keywords.add_keyword("var", KEYWORD);
+    tokenizer_data.keywords.add_keyword("bool", KEYWORD);
+    tokenizer_data.keywords.add_keyword("char", KEYWORD);
+    tokenizer_data.keywords.add_keyword("int", KEYWORD);
+    tokenizer_data.keywords.add_keyword("float", KEYWORD);
+    tokenizer_data.keywords.add_keyword("double", KEYWORD);
     tokenizer_data.keywords.add_keyword("=", OPERATOR);
     tokenizer_data.keywords.add_keyword("<", OPERATOR);
     tokenizer_data.keywords.add_keyword("<=", OPERATOR);
@@ -41,7 +46,7 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("^", OPERATOR);
     tokenizer_data.keywords.add_keyword("(", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword(")", SPECIAL_CHARACTER);
-    tokenizer_data.keywords.add_keyword("foreach", KEYWORD);
+    tokenizer_data.keywords.add_keyword(";", SPECIAL_CHARACTER);
 
     // Table for identifiers
     rule a1 { RULE_TYPE::ANY_OF_SEQUENCE_AND, RULE_QUALIFIER::ONE_TIME, { 'a', 'z', 'A', 'Z' } };
@@ -72,7 +77,7 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.comments.add_sequence_of_rules(std::vector{d1, d1, d2, d3}, TOKEN_TYPE::COMMENT_LINE);
 
     // Table for whitespaces
-    rule ws { RULE_TYPE::ONE_CHAR, RULE_QUALIFIER::ZERO_OR_MORE , {' '} };;
+    rule ws { RULE_TYPE::ANY_OF, RULE_QUALIFIER::ZERO_OR_MORE , {' ', '\n'} };;
 
     tokenizer_data.whitespace.add_sequence_of_rules(std::vector{ws}, TOKEN_TYPE::PURE_WS);
 
@@ -151,45 +156,132 @@ struct parse_data{
 void prepare_parse(parse_data &pd){
     std::vector<grammar_unit> &universe = pd.universe;
 
-    // Non terminals
-    universe.push_back({false, "STMT"});
-    universe.push_back({false, "EXPR"});
-    universe.push_back({false, "TERM"});
-    universe.push_back({false, "EXPR_P"});
-    universe.push_back({false, "TERM_P"});
-    universe.push_back({false, "FACTOR"});
+    // ** NON-TERMINALS **
+        universe.push_back({false, "STMT"});
+        universe.push_back({false, "A_Es"});
+        universe.push_back({false, "A_E"});
+        universe.push_back({false, "A_E_scope"});
+        universe.push_back({false, "F"});
+        universe.push_back({false, "BLOCK_SEGMENT"});
+        universe.push_back({false, "ASSIGNMENT"});
+        universe.push_back({false, "OPT_ASSIGNMENT"});
+        universe.push_back({false, "VAR_DECL"});
+        universe.push_back({false, "TYPE_SPEC"});
 
-    // Terminals
-    universe.push_back({true, "+"});
-    universe.push_back({true, "-"});
-    universe.push_back({true, "*"});
-    universe.push_back({true, "/"});
 
-    universe.push_back({true, "<NUMBER>"});
-    universe.back().mark_as_number();
 
-    universe.push_back({true, "<IDENTIFIER>"});
-    universe.back().mark_as_identifier();
+    // ** TERMINALS **
+        // Arithmetic
+        universe.push_back({true, "+"});
+        universe.push_back({true, "-"});
+        universe.push_back({true, "*"});
+        universe.push_back({true, "/"});
+        universe.push_back({true, "("});
+        universe.push_back({true, ")"});
+        universe.push_back({true, "%"});
+        universe.push_back({true, "++"});
+        universe.push_back({true, "--"});
+
+        // Relational
+        universe.push_back({true, "!="});
+        universe.push_back({true, "=="});
+        universe.push_back({true, ">"});
+        universe.push_back({true, "<"});
+        universe.push_back({true, ">="});
+        universe.push_back({true, "<="});
+
+        // Assignment
+        universe.push_back({true, "="});
+
+        // Logical
+        universe.push_back({true, "||"});
+        universe.push_back({true, "&&"});
+        universe.push_back({true, "!"});
+
+        // Keywords
+        universe.push_back({true, "(cast)"});
+        universe.push_back({true, "if"});
+        universe.push_back({true, "for"});
+        universe.push_back({true, "while"});
+        universe.push_back({true, "struct"});
+        universe.push_back({true, "def"});
+        universe.push_back({true, "arr"});
+        universe.push_back({true, "void"});
+        universe.push_back({true, "int"});
+        universe.push_back({true, "float"});
+        universe.push_back({true, "double"});
+        universe.push_back({true, "bool"});
+        universe.push_back({true, "char"});
+        universe.push_back({true, "string"});
+        universe.push_back({true, "import"});
+        universe.push_back({true, "struct"});
+        universe.push_back({true, "unsigned"});
+        universe.push_back({true, "var"});
+        universe.push_back({true, "val"});
+        universe.push_back({true, "overload"});
+
+
+    // Other
+        universe.push_back({true, "{"});
+        universe.push_back({true, "}"});
+        universe.push_back({true, "["});
+        universe.push_back({true, "]"});
+        universe.push_back({true, ";"});
+
+        // Dynamic terminals
+        universe.push_back({true, "<NUMBER>"});
+        universe.back().mark_as_number();
+
+        universe.push_back({true, "<IDENTIFIER>"});
+        universe.back().mark_as_identifier();
 
 
     std::vector<std::pair<std::string, std::vector<std::string>>> productions_raw{
+
+            // General
             {"STMT",         {" "}},
-            {"STMT",         {"EXPR"}},
+            {"STMT",         {"A_Es", ";", "STMT"}},
+            {"STMT",         {";"}},
+            {"STMT",         {"VAR_DECL", ";", "STMT"}},
+
+            // Block segment is defined by opening '{' and closing '}'
+            {"STMT",         {"BLOCK_SEGMENT"}},
+            {"BLOCK_SEGMENT", {"{", "STMT", "}"}},
 
             // Arithmetic expr group
+            {"A_Es",         {"F", "A_E"}},
+            {"A_E",         {"+", "F", "A_E"}},
+            {"A_E",         {"-", "F", "A_E"}},
+            {"A_E",         {"*", "F", "A_E"}},
+            {"A_E",         {"/", "F", "A_E"}},
+            {"A_E",         {"||", "F", "A_E"}},
+            {"A_E",         {"&&", "F", "A_E"}},
+            {"A_E",         {"!", "F", "A_E"}},
+            {"A_E",         {"/", "F", "A_E"}},
+            {"A_E",         {" "}},
 
-            {"EXPR",         {"TERM", "EXPR_P"}},
+            // Variable declaration
+            {"VAR_DECL", {"var", "TYPE_SPEC", "<IDENTIFIER>", "OPT_ASSIGNMENT"}},
 
-            {"EXPR_P",         {"+", "TERM", "EXPR_P"}},
-            {"EXPR_P",         {" "}},
+            // Type Specifier
+            {"TYPE_SPEC",         {"int"}},
+            {"TYPE_SPEC",         {"double"}},
+            {"TYPE_SPEC",         {"float"}},
+            {"TYPE_SPEC",         {"bool"}},
+            {"TYPE_SPEC",         {"char"}},
 
-            {"TERM",          {"FACTOR", "TERM_P"}},
+            // Assignment
+                // Mandatory
+                {"ASSIGNMENT", {"=", "A_Es"}},
 
-            {"TERM_P",         {"*", "FACTOR", "TERM_P"}},
-            {"TERM_P",         {" "}},
+                // Optional
+                {"OPT_ASSIGNMENT", {"ASSIGNMENT"}},
+                {"OPT_ASSIGNMENT", {" "}},
 
-            {"FACTOR",         {"<IDENTIFIER>"}},
-            {"FACTOR",         {"<NUMBER>"}}
+
+            {"F",         {"<IDENTIFIER>"}},
+            {"F",         {"<NUMBER>"}},
+            {"F",         {"(" ,"A_Es", ")"}}
     };
 
     pd.productions = grammar::parse_productions(universe, productions_raw);
@@ -204,7 +296,6 @@ void prepare_parse(parse_data &pd){
     using namespace pbl_utility;
 
     const grammar_unit *start_symbol = grammar::find_gu_by_name(universe, "STMT");
-
 
     pd.first_set_val = grammar::get_first_set(universe, productions, start_symbol);
     grammar::D_first_set_out(pd.first_set_val);

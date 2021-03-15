@@ -20,14 +20,14 @@
 #include "parse_tree.h"
 #include "pbl_utility.h"
 #include "parse_operations.h"
+#include "ast_node.h"
 
-void T_lexer_test(){
+/*void T_lexer_test(){
     jump_table keywords;
     keywords.add_keyword("for", KEYWORD);
     keywords.add_keyword("while", KEYWORD);
     keywords.add_keyword("if", KEYWORD);
     keywords.add_keyword("else", KEYWORD);
-    keywords.add_keyword("lambda", KEYWORD);
     keywords.add_keyword("=", OPERATOR);
     keywords.add_keyword("<", OPERATOR);
     keywords.add_keyword("<=", OPERATOR);
@@ -36,13 +36,12 @@ void T_lexer_test(){
     keywords.add_keyword("!=", OPERATOR);
     keywords.add_keyword("(", SPECIAL_CHARACTER);
     keywords.add_keyword(")", SPECIAL_CHARACTER);
-    keywords.add_keyword("foreach", KEYWORD);
 
     // Table for identifiers
     rule a1 { RULE_TYPE::ANY_OF_SEQUENCE_AND, RULE_QUALIFIER::ONE_TIME, { 'a', 'z', 'A', 'Z' } };
     rule a2 { RULE_TYPE::ANY_OF_SEQUENCE_AND, RULE_QUALIFIER::ZERO_OR_MORE,
               { 'a', 'z', 'A', 'Z', '1', '9' } };
-    jump_table identifiers; // TODO
+    jump_table identifiers;
     identifiers.add_sequence_of_rules(std::vector{a1, a2}, TOKEN_TYPE::IDENTIFIER);
 
     // Table for integers
@@ -70,18 +69,18 @@ void T_lexer_test(){
     comments.add_sequence_of_rules(std::vector{d1, d1, d2, d3}, TOKEN_TYPE::COMMENT_LINE);
 
     // Table for whitespaces
-    rule ws { RULE_TYPE::ONE_CHAR, RULE_QUALIFIER::ZERO_OR_MORE , {' '} };;
+    rule ws { RULE_TYPE::ANY_OF, RULE_QUALIFIER::ZERO_OR_MORE , {' ', '\n'} };
     jump_table whitespace;
     whitespace.add_sequence_of_rules(std::vector{ws}, TOKEN_TYPE::PURE_WS);
 
     std::string test_string {"01 //aa\n"
                              "for 111 Abracadabra 1.1"};
 
-    std::vector all_tables {whitespace, comments, keywords, identifiers, floats, integers};
+    std::vector all_tables {whitespace, comments, identifiers, keywords, floats, integers};
     //token_reader tr { test_string, all_tables};
 
 
-}
+}*/
 
 void tabs_out(int tabs){
     for (int i = 0; i < tabs; i++){
@@ -91,9 +90,11 @@ void tabs_out(int tabs){
 
 void tree_out(parse_tree &tree, parse_node &root, int tabs = 0){
     tabs_out(tabs);
-    std::cout << root.gu.string_representation << std::endl;
+    std::cout << root.gu.string_representation;
+    if (root.opt_val != "") std::cout << "(value: " << root.opt_val << ")";
+    std::cout << std::endl;
     tabs += 2;
-    for (int i = 0; i < root.children.size(); i++){
+    for (int i = root.children.size() - 1; i >= 0; i--){
         tree_out(tree, tree.get_node(root.children[i]), tabs);
     }
 }
@@ -188,7 +189,8 @@ void tree_out(parse_tree &tree, parse_node &root, int tabs = 0){
 }*/
 
 int main() {
-    std::string source = "1+1";
+    std::string source = "1+2;\n 2+1+(2);";
+    std::string source_var_decl = "var float i = 1;";
 
     auto tokenizer_data = prepare_tokenizer();
 
@@ -196,7 +198,8 @@ int main() {
     prepare_parse(pd);
 
     auto parse_tree = parse_source(tokenizer_data, pd, source);
-    tree_out(parse_tree, parse_tree.get_root());
+    auto parse_tree_2 = parse_source(tokenizer_data, pd, source_var_decl);
+    tree_out(parse_tree_2, parse_tree.get_root());
 
     //T_lexer_test();
     //T_grammar_test();

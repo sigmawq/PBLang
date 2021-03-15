@@ -46,29 +46,6 @@ public:
 
         if (end_of_stream_reached) throw std::runtime_error("String EOS already reached.");
 
-        /*
-        // Edge case for WS
-        if (str[pos] == ' '){
-            ++pos;
-            if (pos == str.size() - 1) end_of_stream_reached = true;
-            return { {TOKEN_TYPE::PURE_WS , " " } };
-        }
-
-        // Edge case for comments
-        else if (str[pos] == '#'){
-            size_t old_pos = pos;
-            auto res = pbl_utility::find_str_symbol(str, pos, str.size() - 1, '\n');
-            if (!res.has_value() || pos == str.size() - 1){
-                end_of_stream_reached = true;
-            }
-            else {
-                pos = res.value();
-                ++pos;
-            }
-            line_go_through(old_pos, pos);
-            return { {TOKEN_TYPE::COMMENT_LINE , " " } };
-        } */
-
         token resulting_token {};
         size_t next_stream_pos = 0;
         size_t max_token_length = 0;

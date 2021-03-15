@@ -21,8 +21,8 @@ struct grammar_unit{
     [[nodiscard]] bool is_term() const { return terminal; }
     void out() const { std::cout << string_representation; }
 
-    void mark_as_identifier() { is_identifier = true; }
-    void mark_as_number() { is_number = true; }
+    inline void mark_as_identifier() { is_identifier = true; }
+    inline void mark_as_number() { is_number = true; }
 };
 
 /*struct parse_node{
@@ -360,12 +360,14 @@ public:
                     if (gu->terminal){
                         current.add_to_first(gu);
                         all_nt_derive_epsilon = false;
+                        break;
                     }
                     else{
                         auto non_term_first = first_set.at(gu);
                         current.add_to_first(non_term_first.content);
                         if (!non_term_first.has_epsilon) {
                             all_nt_derive_epsilon = false;
+                            break;
                         }
                     }
                 }
