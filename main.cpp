@@ -43,7 +43,9 @@ int main() {
     //std::string source = "1+2;\n 2+1+(2);";
     //std::string source_var_decl = "var float i = 1;";
     //std::string source_fun_decl = "overload def sum(int a, int b : int) { var int a = 1; }";
-    std::string source_fun_call = "1 + fcall(1, 1, fcall(1));";
+    //std::string source_fun_call = "1 + fcall(1, 1, fcall(1));";
+    //std::string source_struct_decl = "struct my_struct(16){ var int a = 1; }";
+    std::string source_arr_decl = "arr int,int my_array;";
 
     auto tokenizer_data = prepare_tokenizer();
 
@@ -53,8 +55,11 @@ int main() {
     //auto parse_tree = parse_source(tokenizer_data, pd, source);
     //auto parse_tree_2 = parse_source(tokenizer_data, pd, source_var_decl);
     //auto parse_tree_fun_decl = parse_source(tokenizer_data, pd, source_fun_decl);
-    auto parse_tree_fun_call = parse_source(tokenizer_data, pd, source_fun_call);
-    tree_out(parse_tree_fun_call, parse_tree_fun_call.get_root());
+    //auto parse_tree_fun_call = parse_source(tokenizer_data, pd, source_fun_call);
+    //auto parse_tree_struct_decl = parse_source(tokenizer_data, pd, source_struct_decl);
+    //auto parse_tree_array_decl = parse_source(tokenizer_data, pd, source_struct_decl);
+    auto parse_tree_array_decl = parse_source(tokenizer_data, pd, source_arr_decl);
+    tree_out(parse_tree_array_decl, parse_tree_array_decl.get_root());
 
     //T_lexer_test();
     //T_grammar_test();
