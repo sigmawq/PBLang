@@ -6,6 +6,8 @@
 #define LEXER_TEST_PBL_UTILITY_H
 
 #include <string>
+#include <fstream>
+#include <sstream>
 
 namespace pbl_utility{
 
@@ -50,6 +52,19 @@ namespace pbl_utility{
         str_compose(message, args...);
         std::cout << message << std::endl;
 #endif
+    }
+
+    // Read content of file at @path to string
+    static std::string read_file(std::string const& path){
+        std::ifstream file { path };
+
+        if (!file.is_open()) throw std::runtime_error("Failed to open file");
+
+        // Read file
+        std::stringstream result;
+        result << file.rdbuf();
+
+        return result.str();
     }
 }
 

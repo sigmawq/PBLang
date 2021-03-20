@@ -1,0 +1,27 @@
+// Comment
+// Variable declaration
+var int a = 1;
+var float c;
+
+// Constant declaration
+val int b = 2;
+
+// 1d array declaration
+arr int my_array;
+
+// 2d array declaration
+arr int,int my_array;
+
+// Function declaration
+def f(int a : int) {
+    return a + 25;
+}
+
+// Function call + array access x2 + function call
+f(1)[2][1](a + 1);
+
+// Several variables
+var int a, b;
+
+// Explicit cast
+var int d = (cast)value;

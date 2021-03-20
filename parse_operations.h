@@ -28,6 +28,7 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("if", KEYWORD);
     tokenizer_data.keywords.add_keyword("else", KEYWORD);
     tokenizer_data.keywords.add_keyword("var", KEYWORD);
+    tokenizer_data.keywords.add_keyword("val", KEYWORD);
     tokenizer_data.keywords.add_keyword("struct", KEYWORD);
     tokenizer_data.keywords.add_keyword("def", KEYWORD);
     tokenizer_data.keywords.add_keyword("return", KEYWORD);
@@ -49,6 +50,8 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("*", OPERATOR);
     tokenizer_data.keywords.add_keyword("/", OPERATOR);
     tokenizer_data.keywords.add_keyword("^", OPERATOR);
+    tokenizer_data.keywords.add_keyword("**", OPERATOR);
+    tokenizer_data.keywords.add_keyword("%", OPERATOR);
     tokenizer_data.keywords.add_keyword("(", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword(")", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword(";", SPECIAL_CHARACTER);
@@ -56,6 +59,8 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword(",", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword("{", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword("}", SPECIAL_CHARACTER);
+    tokenizer_data.keywords.add_keyword("[", SPECIAL_CHARACTER);
+    tokenizer_data.keywords.add_keyword("]", SPECIAL_CHARACTER);
 
     // Table for identifiers
     rule a1 { RULE_TYPE::ANY_OF_SEQUENCE_AND, RULE_QUALIFIER::ONE_TIME, { 'a', 'z', 'A', 'Z', '_', '_'} };
@@ -100,6 +105,7 @@ std::optional<std::vector<token>> tokenize(tokenizer_data &tokenizer_data, std::
     std::vector<token> token_stream;
 
     pbl_utility::debug_print_nl("Tokens parsed: ");
+    size_t token_index = 0;
     while (!token_reader.string_eos_reached()){
         auto result = token_reader.read_next_token();
         if (!result.has_value()){
@@ -110,7 +116,8 @@ std::optional<std::vector<token>> tokenize(tokenizer_data &tokenizer_data, std::
         else{
             if (result.value().type == TOKEN_TYPE::PURE_WS || result.value().type == TOKEN_TYPE::COMMENT_LINE) continue;
             token_stream.push_back(result.value());
-            pbl_utility::debug_print_nl(" ", result.value().attribute, " (", std::to_string(result.value().type), ')');
+            pbl_utility::debug_print_nl(std::to_string(token_index), '.', " ", result.value().attribute, " (", std::to_string(result.value().type), ')');
+            ++token_index;
         }
     }
     return {token_stream};
@@ -175,6 +182,7 @@ void prepare_parse(parse_data &pd){
         universe.push_back({false, "ASSIGNMENT"});
         universe.push_back({false, "OPT_ASSIGNMENT"});
         universe.push_back({false, "VAR_DECL"});
+        universe.push_back({false, "OPT_NEXT_VAR_DECL"});
         universe.push_back({false, "CONST_DECL"});
         universe.push_back({false, "ARG_DECL"});
         universe.push_back({false, "TYPE_SPEC"});
@@ -186,12 +194,19 @@ void prepare_parse(parse_data &pd){
         universe.push_back({false, "ARG_CALL_s"});
         universe.push_back({false, "ARG_CALL"});
         universe.push_back({false, "OPT_F_CALL"});
-        universe.push_back({false, "OPT_ARRAY"});
+        universe.push_back({false, "ARR_ACCESS"});
         universe.push_back({false, "OPT_ARRAY_DECL"});
         universe.push_back({false, "STRUCT_DECL"});
         universe.push_back({false, "OPT_EXPLICIT_BYTE_ALLOC"});
         universe.push_back({false, "ARR_DECL"});
-        universe.push_back({false, "OPT_TYPE_SPEC"});
+        universe.push_back({false, "OPT_TYPE_SPEC" });
+        universe.push_back({false, "STRUCT_VAR_DECL"});
+        universe.push_back({false, "OPT_STRUCT_VAR_DECL"});
+        universe.push_back({false, "RETURN_STMT"});
+        universe.push_back({false, "OPT_F_TRAIL"});
+        universe.push_back({false, "F_TRAIL"});
+        universe.push_back({false, "OPT_ARR"});
+        universe.push_back({false, "OPT_UNARY_OP"});
 
     // ** TERMINALS **
         // Arithmetic
@@ -242,6 +257,7 @@ void prepare_parse(parse_data &pd){
         universe.push_back({true, "var"});
         universe.push_back({true, "val"});
         universe.push_back({true, "overload"});
+        universe.push_back({true, "return"});
 
 
     // Other
@@ -268,11 +284,15 @@ void prepare_parse(parse_data &pd){
             {"STMT",         {"A_Es", ";", "STMT"}},
             {"STMT",         {";"}},
             {"STMT",         {"VAR_DECL", ";", "STMT"}},
+            {"STMT",         {"CONST_DECL", ";", "STMT"}},
             {"STMT",         {"ARR_DECL", ";", "STMT"}},
             {"STMT",         {"F_DECL", "STMT"}},
             {"STMT",         {"F_DECL_OVERLOAD", "STMT"}},
-            {"STMT",         {"F_CALL", ";", "STMT"}},
             {"STMT",         {"STRUCT_DECL", "STMT"}},
+            {"STMT",         {"RETURN_STMT", ";", "STMT"}},
+
+            // Return statement
+            {"RETURN_STMT",         {"return", "A_Es"}},
 
             // Block segment is defined by opening '{' and closing '}'
             {"STMT",         {"BLOCK_SEGMENT"}},
@@ -290,23 +310,30 @@ void prepare_parse(parse_data &pd){
             {"A_E",         {" "}},
 
             // Constant declaration
-            {"CONST_DECL", {"val", "TYPE_SPEC", "<IDENTIFIER>" , "OPT_ARRAY", "ASSIGNMENT"}},
+            {"CONST_DECL", {"val", "TYPE_SPEC", "<IDENTIFIER>", "ASSIGNMENT"}},
 
             // Variable declaration
-            {"VAR_DECL", {"var", "TYPE_SPEC", "<IDENTIFIER>", "OPT_ASSIGNMENT"}},
+            {"VAR_DECL", {"var", "TYPE_SPEC", "<IDENTIFIER>", "OPT_ASSIGNMENT", "OPT_NEXT_VAR_DECL"}},
+            {"OPT_NEXT_VAR_DECL", {",", "<IDENTIFIER>", "OPT_ASSIGNMENT", "OPT_NEXT_VAR_DECL"}},
+            {"OPT_NEXT_VAR_DECL", {" "}},
 
             // Array declaration
             {"ARR_DECL", {"arr", "TYPE_SPEC", "OPT_TYPE_SPEC", "<IDENTIFIER>", "OPT_ASSIGNMENT"}},
 
             // Struct declaration
-            {"STRUCT_DECL", {"struct", "<IDENTIFIER>", "OPT_EXPLICIT_BYTE_ALLOC", "BLOCK_SEGMENT" }},
+            {"STRUCT_DECL", {"struct", "<IDENTIFIER>", "OPT_EXPLICIT_BYTE_ALLOC", "{", "OPT_STRUCT_VAR_DECL","}" }},
                 // Optional explicit byte allocation
                 {"OPT_EXPLICIT_BYTE_ALLOC", {"(", "<NUMBER>", ")" }},
                 {"OPT_EXPLICIT_BYTE_ALLOC", {" " }},
 
+                // Struct variable declaration
+                {"STRUCT_VAR_DECL", {"TYPE_SPEC", "<IDENTIFIER>", ";"}},
+                {"OPT_STRUCT_VAR_DECL", {"STRUCT_VAR_DECL", "OPT_STRUCT_VAR_DECL"}},
+                {"OPT_STRUCT_VAR_DECL", {" "}},
+
+
             // Grammar for array ACCESS
-            {"OPT_ARRAY", {"[", "A_Es", "]", "OPT_ARRAY_DECL"}},
-            {"OPT_ARRAY", {" "}},
+            {"ARR_ACCESS", {"[", "A_Es", "]"}},
                 // Used for functions
             {"ARG_DECL", {"TYPE_SPEC", "<IDENTIFIER>"}},
 
@@ -341,11 +368,20 @@ void prepare_parse(parse_data &pd){
                 {"OPT_ASSIGNMENT", {" "}},
 
 
-            {"F",         {"<IDENTIFIER>", "OPT_F_CALL"}},
+            {"F",         {"OPT_UNARY_OP", "<IDENTIFIER>", "OPT_F_TRAIL"}},
             {"F",         {"<NUMBER>"}},
             {"F",         {"(" ,"A_Es", ")"}},
-            {"OPT_F_CALL",         {"(" ,"ARG_CALL_s", ")"}},
-            {"OPT_F_CALL",         {" "}}
+            {"OPT_F_TRAIL",         {"F_TRAIL", "OPT_F_TRAIL"}},
+            {"OPT_F_TRAIL",         {" "}},
+            {"F_TRAIL",         {"F_CALL"}},
+            {"F_TRAIL",         {"OPT_ARR"}},
+            {"F_CALL",         {"(" ,"ARG_CALL_s", ")"}},
+            {"OPT_ARR",         {"[" ,"A_Es", "]"}},
+            {"OPT_UNARY_OP",         {"-"}},
+            {"OPT_UNARY_OP",         {"+"}},
+            {"OPT_UNARY_OP",         {"(cast)"}},
+            {"OPT_UNARY_OP",         {"!"}},
+            {"OPT_UNARY_OP",         {" "}},
     };
 
     pd.productions = grammar::parse_productions(universe, productions_raw);
