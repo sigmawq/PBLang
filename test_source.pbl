@@ -24,4 +24,18 @@ f(1)[2][1](a + 1);
 var int a, b;
 
 // Explicit cast
-var int d = (cast)value;
+var int d = |cast| value;
+
+// Struct declaration
+struct my_struct {
+    int a;
+    int b;
+    double c;
+}
+
+// Struct declaration + explicit byte allocation
+struct my_struct (16){
+    int a;
+    int b;
+    double c;
+}

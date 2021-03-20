@@ -39,6 +39,7 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("float", KEYWORD);
     tokenizer_data.keywords.add_keyword("double", KEYWORD);
     tokenizer_data.keywords.add_keyword("overload", KEYWORD);
+    tokenizer_data.keywords.add_keyword("|cast|", KEYWORD);
     tokenizer_data.keywords.add_keyword("=", OPERATOR);
     tokenizer_data.keywords.add_keyword("<", OPERATOR);
     tokenizer_data.keywords.add_keyword("<=", OPERATOR);
@@ -237,7 +238,7 @@ void prepare_parse(parse_data &pd){
         universe.push_back({true, "!"});
 
         // Keywords
-        universe.push_back({true, "(cast)"});
+        universe.push_back({true, "|cast|"});
         universe.push_back({true, "if"});
         universe.push_back({true, "for"});
         universe.push_back({true, "while"});
@@ -379,7 +380,7 @@ void prepare_parse(parse_data &pd){
             {"OPT_ARR",         {"[" ,"A_Es", "]"}},
             {"OPT_UNARY_OP",         {"-"}},
             {"OPT_UNARY_OP",         {"+"}},
-            {"OPT_UNARY_OP",         {"(cast)"}},
+            {"OPT_UNARY_OP",         {"|cast|"}},
             {"OPT_UNARY_OP",         {"!"}},
             {"OPT_UNARY_OP",         {" "}},
     };

@@ -68,7 +68,7 @@ public:
         std::cout << lhs << " -> ";
         for (const production &p : rhs){
             for (const grammar_unit *gu : p.content){
-                std::cout << gu->string_representation;
+                std::cout << " " << gu->string_representation;
             }
             std::cout << " | ";
         }
@@ -201,10 +201,17 @@ public:
             const grammar_unit *current_pg_lhs,
             production_group &current_pg_rhs,
             first_set_t &first_set_val,
-            std::unordered_map<const grammar_unit*, bool> &first_set_calc_status) {
+            std::unordered_map<const grammar_unit*, bool> &first_set_calc_status, size_t recursion_depth) {
 
-        if (!current_pg_lhs->is_term()){
-            if (first_set_calc_status.at(current_pg_lhs)) return first_set_val.at(current_pg_lhs);
+        if (recursion_depth > 1000){
+            std::string err;
+            pbl_utility::str_compose(err, "Grammar is most probably left-recursive (Recursion depth > 1000), current LHS is ", current_pg_lhs->string_representation);
+            throw std::runtime_error(err);
+        }
+
+        // Returns if current production group is already calculated
+        if (!current_pg_lhs->is_term() && first_set_calc_status.at(current_pg_lhs)){
+            return first_set_val.at(current_pg_lhs);
         }
 
         first_set &position_in_first_set = first_set_val.at(current_pg_lhs);
@@ -212,30 +219,41 @@ public:
         // For all productions in current non terminal
         for (const production &p : current_pg_rhs.get_all_productions()) {
 
-            bool next_nt_produces_epsilon = false;
+            bool current_nt_has_epsilon = true;
             for (int i = 0; i < p.content.size(); i++) {
                 const grammar_unit *next_gu = p.content[i];
+
+                // Same gu case
+                if (next_gu == current_pg_lhs) {
+                    if (!current_pg_rhs.has_epsilon_production()) {
+                        current_nt_has_epsilon = false;
+                        break;
+                    }
+                    else continue;
+                }
 
                 // Terminal case
                 if (next_gu->terminal) {
                     position_in_first_set.content.insert(next_gu);
+                    current_nt_has_epsilon = false;
                     break;
                 }
 
                 // Non terminal case
                 else {
                     first_set first_down = _get_first_set(universe, productions,
-                                                          next_gu, productions.at(next_gu), first_set_val, first_set_calc_status);
+                                                          next_gu, productions.at(next_gu), first_set_val, first_set_calc_status, recursion_depth++);
                     position_in_first_set.content.merge(first_down.content);
-
-                    next_nt_produces_epsilon = (position_in_first_set.has_epsilon);
+                    if (!first_down.has_epsilon) {
+                        current_nt_has_epsilon = false;
+                        break;
+                    }
                 }
-                if (!next_nt_produces_epsilon) break;
             }
-            if (next_nt_produces_epsilon) position_in_first_set.has_epsilon = true;
+            if (current_nt_has_epsilon) position_in_first_set.has_epsilon = true;
         }
         if (current_pg_rhs.has_epsilon_production()) position_in_first_set.has_epsilon = true;
-        first_set_calc_status.at(current_pg_lhs) = true;
+        auto & val = first_set_calc_status.at(current_pg_lhs); val = true;
         return position_in_first_set;
     }
 
@@ -281,7 +299,7 @@ public:
 
         for (auto &pg : productions){
             _get_first_set(universe, productions, pg.first, pg.second,
-                           first_set_val, first_set_calc_status);
+                           first_set_val, first_set_calc_status, 1);
         }
 
         return first_set_val;
