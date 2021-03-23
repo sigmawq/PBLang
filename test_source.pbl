@@ -59,3 +59,22 @@ struct user_defined_struct {
 }
 
 var user_defined_struct my_struct = 1;
+
+// User defined struct in function declaration
+struct range{
+    int a;
+    int b;
+}
+
+// Multiple struct access
+def range_set_default(range r : void){
+    r.a.next.another = 1;
+}
+
+// Another example
+def get_random_range(void : range){
+    var range r;
+    r.a = 200;
+    r.b = 400;
+    return r;
+}

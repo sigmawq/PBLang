@@ -64,6 +64,7 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword(";", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword(":", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword(",", SPECIAL_CHARACTER);
+    tokenizer_data.keywords.add_keyword(".", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword("{", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword("}", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword("[", SPECIAL_CHARACTER);
@@ -227,6 +228,8 @@ void prepare_parse(parse_data &pd){
         universe.push_back({false, "ARR_SIGN"});
         universe.push_back({false, "CONST_SIGN"});
         universe.push_back({false, "NEXT_OPT_VAR_SIGN"});
+        universe.push_back({false, "OPT_STRUCT_ACCESS"});
+        universe.push_back({false, "STRUCT_ACCESS"});
 
     // ** TERMINALS **
         // Arithmetic
@@ -292,6 +295,7 @@ void prepare_parse(parse_data &pd){
         universe.push_back({true, ";"});
         universe.push_back({true, ":"});
         universe.push_back({true, ","});
+        universe.push_back({true, "."});
 
         // Dynamic terminals
         universe.push_back({true, "<NUMBER>"});
@@ -431,12 +435,22 @@ void prepare_parse(parse_data &pd){
             {"F",         {"OPT_UNARY_OP", "<IDENTIFIER>", "OPT_F_TRAIL"}},
             {"F",         {"<NUMBER>"}},
             {"F",         {"(" ,"A_Es", ")"}},
+
             {"OPT_F_TRAIL",         {"F_TRAIL", "OPT_F_TRAIL"}},
             {"OPT_F_TRAIL",         {" "}},
+
             {"F_TRAIL",         {"F_CALL"}},
             {"F_TRAIL",         {"OPT_ARR"}},
+            {"F_TRAIL",         {"STRUCT_ACCESS"}},
+
+            {"OPT_STRUCT_ACCESS",         {"STRUCT_ACCESS", "OPT_STRUCT_ACCESS"}},
+            {"OPT_STRUCT_ACCESS",         {" "}},
+            {"STRUCT_ACCESS",         {".", "<IDENTIFIER>"}},
+
             {"F_CALL",         {"(" ,"ARG_CALL_s", ")"}},
+
             {"OPT_ARR",         {"[" ,"A_Es", "]"}},
+
             {"OPT_UNARY_OP",         {"-"}},
             {"OPT_UNARY_OP",         {"+"}},
             {"OPT_UNARY_OP",         {"|cast|"}},

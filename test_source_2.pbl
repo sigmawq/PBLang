@@ -13,5 +13,6 @@ def main(void : void){
 }
 
 // TODO: unsigned data type modifier DONE
-// TODO: user type declaration using val, var and in function definition
+// TODO: user type declaration using val, var and in function definition DONE
 // TODO: arr in function declaration DONE
+// TODO: struct access by '.'
