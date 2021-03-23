@@ -36,6 +36,7 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("char", KEYWORD);
     tokenizer_data.keywords.add_keyword("int", KEYWORD);
     tokenizer_data.keywords.add_keyword("arr", KEYWORD);
+    tokenizer_data.keywords.add_keyword("void", KEYWORD);
     tokenizer_data.keywords.add_keyword("float", KEYWORD);
     tokenizer_data.keywords.add_keyword("double", KEYWORD);
     tokenizer_data.keywords.add_keyword("overload", KEYWORD);
@@ -53,6 +54,10 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("^", OPERATOR);
     tokenizer_data.keywords.add_keyword("**", OPERATOR);
     tokenizer_data.keywords.add_keyword("%", OPERATOR);
+    tokenizer_data.keywords.add_keyword("+=", OPERATOR);
+    tokenizer_data.keywords.add_keyword("-=", OPERATOR);
+    tokenizer_data.keywords.add_keyword("*=", OPERATOR);
+    tokenizer_data.keywords.add_keyword("/=", OPERATOR);
     tokenizer_data.keywords.add_keyword("(", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword(")", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword(";", SPECIAL_CHARACTER);
@@ -87,7 +92,9 @@ tokenizer_data prepare_tokenizer(){
     // Table for comments
     rule d1 { RULE_TYPE::ONE_CHAR, RULE_QUALIFIER::ONE_TIME , {'/'} };
     rule d2 { RULE_TYPE::ANY_OF_SEQUENCE_AND, RULE_QUALIFIER::ZERO_OR_MORE , {0, 0x0A - 1, 0x0A + 1, INT8_MAX - 1} };
-    rule d3 { RULE_TYPE::ONE_CHAR, RULE_QUALIFIER::ONE_TIME , {0x0A} };
+
+    // new line & eos chars
+    rule d3 { RULE_TYPE::ANY_OF, RULE_QUALIFIER::ONE_TIME , {0x0A} };
 
     tokenizer_data.comments.add_sequence_of_rules(std::vector{d1, d1, d2, d3}, TOKEN_TYPE::COMMENT_LINE);
 
@@ -200,6 +207,7 @@ void prepare_parse(parse_data &pd){
         universe.push_back({false, "STRUCT_DECL"});
         universe.push_back({false, "OPT_EXPLICIT_BYTE_ALLOC"});
         universe.push_back({false, "ARR_DECL"});
+        universe.push_back({false, "OPT_ARG_DECL"});
         universe.push_back({false, "OPT_TYPE_SPEC" });
         universe.push_back({false, "STRUCT_VAR_DECL"});
         universe.push_back({false, "OPT_STRUCT_VAR_DECL"});
@@ -208,6 +216,11 @@ void prepare_parse(parse_data &pd){
         universe.push_back({false, "F_TRAIL"});
         universe.push_back({false, "OPT_ARR"});
         universe.push_back({false, "OPT_UNARY_OP"});
+        universe.push_back({false, "OPT_COMPLEX_ASSIGNMENT"});
+        universe.push_back({false, "COMPLEX_ASSIGNMENT"});
+        universe.push_back({false, "F_INPUT"});
+        universe.push_back({false, "F_OUTPUT"});
+        universe.push_back({false, "VOID_TYPE"});
 
     // ** TERMINALS **
         // Arithmetic
@@ -231,6 +244,10 @@ void prepare_parse(parse_data &pd){
 
         // Assignment
         universe.push_back({true, "="});
+        universe.push_back({true, "+="});
+        universe.push_back({true, "-="});
+        universe.push_back({true, "*="});
+        universe.push_back({true, "/="});
 
         // Logical
         universe.push_back({true, "||"});
@@ -308,14 +325,18 @@ void prepare_parse(parse_data &pd){
             {"A_E",         {"||", "F", "A_E"}},
             {"A_E",         {"&&", "F", "A_E"}},
             {"A_E",         {"!", "F", "A_E"}},
+            {"A_E",         {"=", "F", "A_E"}},
+            {"A_E",         {"+=", "F", "A_E"}},
+            {"A_E",         {"*=", "F", "A_E"}},
+            {"A_E",         {"/=", "F", "A_E"}},
             {"A_E",         {" "}},
 
             // Constant declaration
-            {"CONST_DECL", {"val", "TYPE_SPEC", "<IDENTIFIER>", "ASSIGNMENT"}},
+            {"CONST_DECL", {"val", "TYPE_SPEC", "<IDENTIFIER>", "COMPLEX_ASSIGNMENT"}},
 
             // Variable declaration
-            {"VAR_DECL", {"var", "TYPE_SPEC", "<IDENTIFIER>", "OPT_ASSIGNMENT", "OPT_NEXT_VAR_DECL"}},
-            {"OPT_NEXT_VAR_DECL", {",", "<IDENTIFIER>", "OPT_ASSIGNMENT", "OPT_NEXT_VAR_DECL"}},
+            {"VAR_DECL", {"var", "TYPE_SPEC", "<IDENTIFIER>", "OPT_COMPLEX_ASSIGNMENT", "OPT_NEXT_VAR_DECL"}},
+            {"OPT_NEXT_VAR_DECL", {",", "<IDENTIFIER>", "OPT_COMPLEX_ASSIGNMENT", "OPT_NEXT_VAR_DECL"}},
             {"OPT_NEXT_VAR_DECL", {" "}},
 
             // Array declaration
@@ -335,8 +356,7 @@ void prepare_parse(parse_data &pd){
 
             // Grammar for array ACCESS
             {"ARR_ACCESS", {"[", "A_Es", "]"}},
-                // Used for functions
-            {"ARG_DECL", {"TYPE_SPEC", "<IDENTIFIER>"}},
+
 
             // Type Specifier
             {"TYPE_SPEC",         {"int"}},
@@ -347,12 +367,22 @@ void prepare_parse(parse_data &pd){
             {"OPT_TYPE_SPEC",         {",", "TYPE_SPEC", "OPT_TYPE_SPEC"}},
             {"OPT_TYPE_SPEC",         {" "}},
 
+            {"VOID_TYPE", {"void"}},
+
             // Function declaration
-            {"F_DECL",         {"def", "<IDENTIFIER>", "(", "OPT_ARG_START", "OPT_ARG_TAIL", ":", "TYPE_SPEC", ")", "BLOCK_SEGMENT"}},
-            {"F_DECL_OVERLOAD",         {"overload", "def", "<IDENTIFIER>", "(", "OPT_ARG_START", "OPT_ARG_TAIL", ":", "TYPE_SPEC", ")", "BLOCK_SEGMENT"}},
-            {"OPT_ARG_START",         {"ARG_DECL"}},
-            {"OPT_ARG_TAIL",         {"," ,"ARG_DECL", "OPT_ARG_TAIL"}},
-            {"OPT_ARG_TAIL",         {" "}},
+            {"F_DECL",         {"def", "<IDENTIFIER>", "(", "F_INPUT", ":", "F_OUTPUT", ")", "BLOCK_SEGMENT"}},
+            {"F_DECL_OVERLOAD",         {"overload", "F_DECL"}},
+
+            {"F_INPUT",         {"ARG_DECL", "OPT_ARG_DECL"}},
+            {"F_INPUT",         {"VOID_TYPE"}},
+
+            {"F_OUTPUT",         {"TYPE_SPEC"}},
+            {"F_OUTPUT",         {"VOID_TYPE"}},
+
+            {"ARG_DECL", {"TYPE_SPEC", "<IDENTIFIER>"}},
+
+            {"OPT_ARG_DECL", {",", "TYPE_SPEC", "<IDENTIFIER>", "OPT_ARG_DECL"}},
+            {"OPT_ARG_DECL", {" "}},
 
             // Arguments for function call
             {"ARG_CALL_s",         {" "}},
@@ -362,11 +392,21 @@ void prepare_parse(parse_data &pd){
 
             // Assignment
                 // Mandatory
-                {"ASSIGNMENT", {"=", "A_Es"}},
+                {"ASSIGNMENT", {"="}},
+                {"ASSIGNMENT", {"+="}},
+                {"ASSIGNMENT", {"-="}},
+                {"ASSIGNMENT", {"*="}},
+                {"ASSIGNMENT", {"/="}},
 
                 // Optional
                 {"OPT_ASSIGNMENT", {"ASSIGNMENT"}},
                 {"OPT_ASSIGNMENT", {" "}},
+
+                // Complex + Optional
+                {"OPT_COMPLEX_ASSIGNMENT", {"COMPLEX_ASSIGNMENT"}},
+                {"OPT_COMPLEX_ASSIGNMENT", {" "}},
+                {"COMPLEX_ASSIGNMENT", {"=", "A_Es"}},
+
 
 
             {"F",         {"OPT_UNARY_OP", "<IDENTIFIER>", "OPT_F_TRAIL"}},

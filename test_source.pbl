@@ -39,3 +39,9 @@ struct my_struct (16){
     int b;
     double c;
 }
+
+// Assignment
+variable = 1;
+variable += 2;
+
+// variable *= 2*2;

@@ -46,7 +46,8 @@ int main() {
     parse_data pd;
     prepare_parse(pd);
 
-    auto source = pbl_utility::read_file("../test_source.pbl");
+    auto source = pbl_utility::read_file("../test_source_2.pbl");
+    source += '\n';
     std::cout << source << std::endl;
 
     auto parse_tree_array_decl = parse_source(tokenizer_data, pd, source);

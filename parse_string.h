@@ -10,6 +10,15 @@
 #include "grammar.h"
 #include "parse_tree.h"
 
+void derivation_sequence_out(std::stack<size_t> stack, parse_tree &pt){
+    std::cout << " -> ";
+    while (!stack.empty()){
+        std::cout << pt.get_node(stack.top()).gu.string_representation << " ";
+        stack.pop();
+    }
+    std::cout << "\n";
+}
+
 // Returns a parse tree
 parse_tree parse_string(std::vector<bound_token> &token_stream,
                         const grammar_unit *start_symbol, parse_table &pt){
@@ -23,6 +32,9 @@ parse_tree parse_string(std::vector<bound_token> &token_stream,
 
     bool out_of_range_tok_stream = false;
     while (!stack.empty()){
+#ifdef DEBUG_MODE_POUT
+        derivation_sequence_out(stack, tree);
+#endif
         size_t top_stack = stack.top();
         stack.pop();
         parse_node &top_stack_node = tree.get_node(top_stack);
