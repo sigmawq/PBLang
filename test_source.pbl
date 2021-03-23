@@ -43,5 +43,12 @@ struct my_struct (16){
 // Assignment
 variable = 1;
 variable += 2;
+variable *= 2*2;
 
-// variable *= 2*2;
+// Variable declaration + type modifier
+var unsigned int my_var = 1;
+
+// Function declaration with unsigned modifier + array (input, output, multiple dim)
+def foo(unsigned char c, arr int,int my_array : unsigned int){
+
+}

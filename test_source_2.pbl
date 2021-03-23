@@ -11,3 +11,7 @@ def sum(int a, int b : int){
 def main(void : void){
     console_out(sum(1, 2));
 }
+
+// TODO: unsigned data type modifier DONE
+// TODO: user type declaration using val, var and in function definition
+// TODO: arr in function declaration DONE

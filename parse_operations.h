@@ -40,6 +40,7 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("float", KEYWORD);
     tokenizer_data.keywords.add_keyword("double", KEYWORD);
     tokenizer_data.keywords.add_keyword("overload", KEYWORD);
+    tokenizer_data.keywords.add_keyword("unsigned", KEYWORD);
     tokenizer_data.keywords.add_keyword("|cast|", KEYWORD);
     tokenizer_data.keywords.add_keyword("=", OPERATOR);
     tokenizer_data.keywords.add_keyword("<", OPERATOR);
@@ -221,6 +222,11 @@ void prepare_parse(parse_data &pd){
         universe.push_back({false, "F_INPUT"});
         universe.push_back({false, "F_OUTPUT"});
         universe.push_back({false, "VOID_TYPE"});
+        universe.push_back({false, "OPT_TYPE_MOD"});
+        universe.push_back({false, "VAR_SIGN"});
+        universe.push_back({false, "ARR_SIGN"});
+        universe.push_back({false, "CONST_SIGN"});
+        universe.push_back({false, "NEXT_OPT_VAR_SIGN"});
 
     // ** TERMINALS **
         // Arithmetic
@@ -332,15 +338,15 @@ void prepare_parse(parse_data &pd){
             {"A_E",         {" "}},
 
             // Constant declaration
-            {"CONST_DECL", {"val", "TYPE_SPEC", "<IDENTIFIER>", "COMPLEX_ASSIGNMENT"}},
+            {"CONST_DECL", {"val", "VAR_SIGN", "<IDENTIFIER>", "COMPLEX_ASSIGNMENT"}},
 
             // Variable declaration
-            {"VAR_DECL", {"var", "TYPE_SPEC", "<IDENTIFIER>", "OPT_COMPLEX_ASSIGNMENT", "OPT_NEXT_VAR_DECL"}},
+            {"VAR_DECL", {"var", "VAR_SIGN", "<IDENTIFIER>", "OPT_COMPLEX_ASSIGNMENT", "OPT_NEXT_VAR_DECL"}},
             {"OPT_NEXT_VAR_DECL", {",", "<IDENTIFIER>", "OPT_COMPLEX_ASSIGNMENT", "OPT_NEXT_VAR_DECL"}},
             {"OPT_NEXT_VAR_DECL", {" "}},
 
             // Array declaration
-            {"ARR_DECL", {"arr", "TYPE_SPEC", "OPT_TYPE_SPEC", "<IDENTIFIER>", "OPT_ASSIGNMENT"}},
+            {"ARR_DECL", {"ARR_SIGN", "<IDENTIFIER>", "OPT_ASSIGNMENT"}},
 
             // Struct declaration
             {"STRUCT_DECL", {"struct", "<IDENTIFIER>", "OPT_EXPLICIT_BYTE_ALLOC", "{", "OPT_STRUCT_VAR_DECL","}" }},
@@ -357,7 +363,6 @@ void prepare_parse(parse_data &pd){
             // Grammar for array ACCESS
             {"ARR_ACCESS", {"[", "A_Es", "]"}},
 
-
             // Type Specifier
             {"TYPE_SPEC",         {"int"}},
             {"TYPE_SPEC",         {"double"}},
@@ -369,6 +374,10 @@ void prepare_parse(parse_data &pd){
 
             {"VOID_TYPE", {"void"}},
 
+            // Type Modifier
+            {"OPT_TYPE_MOD", {"unsigned"}},
+            {"OPT_TYPE_MOD", {" "}},
+
             // Function declaration
             {"F_DECL",         {"def", "<IDENTIFIER>", "(", "F_INPUT", ":", "F_OUTPUT", ")", "BLOCK_SEGMENT"}},
             {"F_DECL_OVERLOAD",         {"overload", "F_DECL"}},
@@ -376,12 +385,14 @@ void prepare_parse(parse_data &pd){
             {"F_INPUT",         {"ARG_DECL", "OPT_ARG_DECL"}},
             {"F_INPUT",         {"VOID_TYPE"}},
 
-            {"F_OUTPUT",         {"TYPE_SPEC"}},
+            {"F_OUTPUT",         {"VAR_SIGN"}},
+            {"F_OUTPUT",         {"ARR_SIGN"}},
             {"F_OUTPUT",         {"VOID_TYPE"}},
 
-            {"ARG_DECL", {"TYPE_SPEC", "<IDENTIFIER>"}},
+            {"ARG_DECL", {"VAR_SIGN", "<IDENTIFIER>"}},
+            {"ARG_DECL", {"ARR_SIGN", "<IDENTIFIER>"}},
 
-            {"OPT_ARG_DECL", {",", "TYPE_SPEC", "<IDENTIFIER>", "OPT_ARG_DECL"}},
+            {"OPT_ARG_DECL", {",", "ARG_DECL", "OPT_ARG_DECL"}},
             {"OPT_ARG_DECL", {" "}},
 
             // Arguments for function call
@@ -407,7 +418,14 @@ void prepare_parse(parse_data &pd){
                 {"OPT_COMPLEX_ASSIGNMENT", {" "}},
                 {"COMPLEX_ASSIGNMENT", {"=", "A_Es"}},
 
+                // Different signatures
+                // Variable signature
+            {"VAR_SIGN", {"OPT_TYPE_MOD", "TYPE_SPEC"}},
+            {"NEXT_OPT_VAR_SIGN", {",", "VAR_SIGN", "NEXT_OPT_VAR_SIGN"}},
+            {"NEXT_OPT_VAR_SIGN", {" "}},
 
+                // Array signature
+            {"ARR_SIGN", {"arr", "VAR_SIGN", "NEXT_OPT_VAR_SIGN"}},
 
             {"F",         {"OPT_UNARY_OP", "<IDENTIFIER>", "OPT_F_TRAIL"}},
             {"F",         {"<NUMBER>"}},
