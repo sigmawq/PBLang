@@ -52,3 +52,10 @@ var unsigned int my_var = 1;
 def foo(unsigned char c, arr int,int my_array : unsigned int){
 
 }
+
+// User defined struct and it's use
+struct user_defined_struct {
+    double a = 1.0;
+}
+
+var user_defined_struct my_struct = 1;
