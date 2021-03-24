@@ -25,12 +25,9 @@ std::string_view get_line_in_string(std::string const& str, int line){
 
     // Find start of the desired line
     for (int i = 0; i < line; i++){
-        int j = 0;
-        while (str[j] != '\n'){
-            ++j;
+        while (str[leftmost_index] != '\n'){
             ++leftmost_index;
         }
-        ++i;
         ++leftmost_index;
     }
 
@@ -90,7 +87,7 @@ parse_tree parse_string(std::vector<bound_token> &token_stream,
             }
 
             if (&(top_stack_node.gu) == token_stream[token_stream_index].gu){
-                if ((&top_stack_node)->gu.is_number || (&top_stack_node)->gu.is_identifier){
+                if ((&top_stack_node)->gu.is_number || (&top_stack_node)->gu.is_identifier || (&top_stack_node)->gu.is_string){
                     top_stack_node.set_token(token_stream[token_stream_index].token_value);
                 }
                 ++token_stream_index;

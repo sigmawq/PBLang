@@ -10,13 +10,14 @@
 struct tokenizer_data{
     jump_table keywords;
     jump_table identifiers;
+    jump_table strings;
     jump_table integers;
     jump_table floats;
     jump_table comments;
     jump_table whitespace;
 
     std::vector<std::reference_wrapper<jump_table>> get_in_array_form(){
-        return { whitespace, comments, floats, integers, keywords,  identifiers};
+        return { whitespace, comments, floats, integers, keywords,  identifiers, strings};
     }
 };
 
@@ -30,6 +31,7 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("var", KEYWORD);
     tokenizer_data.keywords.add_keyword("val", KEYWORD);
     tokenizer_data.keywords.add_keyword("struct", KEYWORD);
+    tokenizer_data.keywords.add_keyword("string", KEYWORD);
     tokenizer_data.keywords.add_keyword("def", KEYWORD);
     tokenizer_data.keywords.add_keyword("return", KEYWORD);
     tokenizer_data.keywords.add_keyword("bool", KEYWORD);
@@ -69,6 +71,11 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("}", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword("[", SPECIAL_CHARACTER);
     tokenizer_data.keywords.add_keyword("]", SPECIAL_CHARACTER);
+
+    // Table for string literals
+    rule z1 {  RULE_TYPE::ONE_CHAR, RULE_QUALIFIER::ONE_TIME, { {'\"'} }};
+    rule z2 {  RULE_TYPE::ANY_OF_SEQUENCE, RULE_QUALIFIER::ZERO_OR_MORE, { {0, INT8_MAX - 1} }};
+    tokenizer_data.strings.add_sequence_of_rules(std::vector {z1, z2, z1}, TOKEN_TYPE::STRING);
 
     // Table for identifiers
     rule a1 { RULE_TYPE::ANY_OF_SEQUENCE_AND, RULE_QUALIFIER::ONE_TIME, { 'a', 'z', 'A', 'Z', '_', '_'} };
@@ -144,6 +151,11 @@ std::vector<bound_token> bind_token_to_universe(std::vector<grammar_unit> &unive
         if (el.type == TOKEN_TYPE::IDENTIFIER){
             result = std::find_if(universe.begin(), universe.end(), [&](const grammar_unit &gu) {
                 return (gu.is_identifier);
+            });
+        }
+        else if (el.type == TOKEN_TYPE::STRING){
+            result = std::find_if(universe.begin(), universe.end(), [&](const grammar_unit &gu) {
+                return (gu.is_string);
             });
         }
         else if (el.type == TOKEN_TYPE::CONSTANT_FP || el.type == TOKEN_TYPE::CONSTANT_INTEGER){
@@ -233,6 +245,9 @@ void prepare_parse(parse_data &pd){
         universe.push_back({false, "NEXT_OPT_VAR_SIGN"});
         universe.push_back({false, "OPT_STRUCT_ACCESS"});
         universe.push_back({false, "STRUCT_ACCESS"});
+        universe.push_back({false, "OPT_DIM_DECL"});
+        universe.push_back({false, "DIM_DECL"});
+        universe.push_back({false, "NEXT_DIM_DECL"});
 
     // ** TERMINALS **
         // Arithmetic
@@ -307,6 +322,9 @@ void prepare_parse(parse_data &pd){
         universe.push_back({true, "<IDENTIFIER>"});
         universe.back().mark_as_identifier();
 
+        universe.push_back({true, "<STRING>"});
+        universe.back().mark_as_string();
+
 
     std::vector<std::pair<std::string, std::vector<std::string>>> productions_raw{
 
@@ -376,6 +394,7 @@ void prepare_parse(parse_data &pd){
             {"TYPE_SPEC",         {"float"}},
             {"TYPE_SPEC",         {"bool"}},
             {"TYPE_SPEC",         {"char"}},
+            {"TYPE_SPEC",         {"string"}},
             {"TYPE_SPEC",         {"<IDENTIFIER>"}},
             {"OPT_TYPE_SPEC",         {",", "TYPE_SPEC", "OPT_TYPE_SPEC"}},
             {"OPT_TYPE_SPEC",         {" "}},
@@ -433,10 +452,17 @@ void prepare_parse(parse_data &pd){
             {"NEXT_OPT_VAR_SIGN", {" "}},
 
                 // Array signature
-            {"ARR_SIGN", {"arr", "VAR_SIGN", "NEXT_OPT_VAR_SIGN"}},
+            {"ARR_SIGN", {"arr", "[", "OPT_DIM_DECL", "]", "VAR_SIGN"}},
+            {"OPT_DIM_DECL", {"DIM_DECL"}},
+            {"OPT_DIM_DECL", {" "}},
+
+            {"DIM_DECL", {"F", "NEXT_DIM_DECL"}},
+            {"NEXT_DIM_DECL", {",", "F", "NEXT_DIM_DECL"}},
+            {"NEXT_DIM_DECL", {" "}},
 
             {"F",         {"OPT_UNARY_OP", "<IDENTIFIER>", "OPT_F_TRAIL"}},
             {"F",         {"<NUMBER>"}},
+            {"F",         {"<STRING>"}},
             {"F",         {"(" ,"A_Es", ")"}},
 
             {"OPT_F_TRAIL",         {"F_TRAIL", "OPT_F_TRAIL"}},

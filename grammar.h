@@ -17,12 +17,14 @@ struct grammar_unit{
 
     bool is_identifier;
     bool is_number;
+    bool is_string;
 
     [[nodiscard]] bool is_term() const { return terminal; }
     void out() const { std::cout << string_representation; }
 
     inline void mark_as_identifier() { is_identifier = true; }
     inline void mark_as_number() { is_number = true; }
+    inline void mark_as_string() { is_string = true; }
 };
 
 /*struct parse_node{
