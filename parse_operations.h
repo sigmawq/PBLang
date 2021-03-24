@@ -108,7 +108,7 @@ tokenizer_data prepare_tokenizer(){
     return tokenizer_data;
 }
 
-// Produdes token stream from source string.
+// Produces token stream from source string.
 // Comments and whitespaces are ignored
 std::optional<std::vector<token>> tokenize(tokenizer_data &tokenizer_data, std::string const& source){
     token_reader token_reader { source, tokenizer_data.get_in_array_form() };
@@ -117,13 +117,16 @@ std::optional<std::vector<token>> tokenize(tokenizer_data &tokenizer_data, std::
     pbl_utility::debug_print_nl("Tokens parsed: ");
     size_t token_index = 0;
     while (!token_reader.string_eos_reached()){
+        auto pos = token_reader.get_position();
         auto result = token_reader.read_next_token();
         if (!result.has_value()){
-            auto pos = token_reader.get_position();
             std::cout << "Unrecognized token at " << pos.first << ", " << pos.second << std::endl;
+            highlight_error_point(source, pos.first, pos.second);
             return {};
         }
         else{
+            result.value().line = pos.first;
+            result.value().col = pos.second;
             if (result.value().type == TOKEN_TYPE::PURE_WS || result.value().type == TOKEN_TYPE::COMMENT_LINE) continue;
             token_stream.push_back(result.value());
             pbl_utility::debug_print_nl(std::to_string(token_index), '.', " ", result.value().attribute, " (", std::to_string(result.value().type), ')');
@@ -496,7 +499,7 @@ parse_tree parse_source(tokenizer_data &td, parse_data &pd, std::string &source)
         throw std::runtime_error("Parser stops due to tokenizer failure"); }
 
     auto bound_token_stream = bind_token_to_universe(pd.universe, tokens.value());
-    auto tree = parse_string(bound_token_stream, pd.start_symbol, pd.pt.value());
+    auto tree = parse_string(bound_token_stream, pd.start_symbol, pd.pt.value(), source);
 
     return tree;
 }

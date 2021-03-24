@@ -21,6 +21,7 @@
 #include "pbl_utility.h"
 #include "parse_operations.h"
 #include "ast_node.h"
+#include "tests.h"
 
 void tabs_out(int tabs){
     for (int i = 0; i < tabs; i++){
@@ -46,12 +47,15 @@ int main() {
     parse_data pd;
     prepare_parse(pd);
 
-    auto source = pbl_utility::read_file("../test_source.pbl");
+    auto source = pbl_utility::read_file("../pbl_little_test.pbl");
     source += '\n';
     std::cout << source << std::endl;
 
     auto parse_tree_array_decl = parse_source(tokenizer_data, pd, source);
     tree_out(parse_tree_array_decl, parse_tree_array_decl.get_root());
+
+    using namespace pblang_lexer_parser_tests;
+
     //T_lexer_test();
     //T_grammar_test();
     return 0;

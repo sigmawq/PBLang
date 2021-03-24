@@ -7,6 +7,7 @@
 
 #include <list>
 #include <stack>
+#include <string_view>
 #include "grammar.h"
 #include "parse_tree.h"
 
@@ -19,9 +20,47 @@ void derivation_sequence_out(std::stack<size_t> stack, parse_tree &pt){
     std::cout << "\n";
 }
 
+std::string_view get_line_in_string(std::string const& str, int line){
+    size_t leftmost_index = 0;
+
+    // Find start of the desired line
+    for (int i = 0; i < line; i++){
+        int j = 0;
+        while (str[j] != '\n'){
+            ++j;
+            ++leftmost_index;
+        }
+        ++i;
+        ++leftmost_index;
+    }
+
+    // Find end of desired line
+    size_t rightmost_index = leftmost_index;
+    while (str[rightmost_index] != '\n' && rightmost_index < str.size()){
+        ++rightmost_index;
+    }
+
+    std::string_view desired_line { str.data() + leftmost_index, rightmost_index - leftmost_index};
+
+    return desired_line;
+}
+
+void output_spaces(int count){
+    for (int i = 0; i < count; i++){
+        std::cout << ' ';
+    }
+}
+
+void highlight_error_point(std::string const& str, int line, int col){
+    std::string_view str_line = get_line_in_string(str, line);
+    std::cout << str_line << std::endl;
+    output_spaces(col);
+    std::cout << '^' << std::endl;
+}
+
 // Returns a parse tree
 parse_tree parse_string(std::vector<bound_token> &token_stream,
-                        const grammar_unit *start_symbol, parse_table &pt){
+                        const grammar_unit *start_symbol, parse_table &pt, std::string const& source_str){
 
     parse_tree tree { *start_symbol };
     std::stack<size_t> stack;
@@ -58,9 +97,13 @@ parse_tree parse_string(std::vector<bound_token> &token_stream,
                 continue;
             }
             else {
-                std::string err = "Unexpected token at (TODO), expected: ";
-                pbl_utility::str_compose(err, top_stack_node.gu.string_representation, " but found ",
+                std::string err = "Unexpected token at ";
+                pbl_utility::str_compose(err,  "(", std::to_string(token_stream[token_stream_index].token_value.line),
+                                                        ",",
+                                         std::to_string(token_stream[token_stream_index].token_value.col), ")",
+                                         " expected: ",top_stack_node.gu.string_representation, " but found ",
                                          token_stream[token_stream_index].gu->string_representation);
+                highlight_error_point(source_str, token_stream[token_stream_index].token_value.line, token_stream[token_stream_index].token_value.col);
                 throw std::runtime_error(err);
             }
         }
@@ -77,12 +120,14 @@ parse_tree parse_string(std::vector<bound_token> &token_stream,
 
             if (!rec.has_value()) {
                 std::string err;
-                pbl_utility::str_compose(err, "Unexpected token at (TODO). Found ");
+                pbl_utility::str_compose(err, "Unexpected token at (", std::to_string(token_stream[token_stream_index].token_value.line), ",",
+                                                                       std::to_string(token_stream[token_stream_index].token_value.col), ") ", "Found ");
                 if (out_of_range_tok_stream) pbl_utility::str_compose(err, "EOS, but expected but expected one of derivations of ",
                                                                       (&top_stack_node)->gu.string_representation);
                 else pbl_utility::str_compose(err, token_stream[token_stream_index].gu->string_representation,
                                               ", but expected one of derivations of ", (&top_stack_node)->gu.string_representation);
                 pbl_utility::str_compose(err, " (token index: ", std::to_string(token_stream_index), ")");
+                highlight_error_point(source_str, token_stream[token_stream_index].token_value.line, token_stream[token_stream_index].token_value.col);
                 throw std::runtime_error(err);
             }
             else {

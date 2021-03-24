@@ -35,7 +35,7 @@ public:
 
         // Goes through @str to increment reader's @line and @line_index
         auto line_go_through = [&](size_t from, size_t to){
-            for (size_t i = from; i <= to; i++){
+            for (size_t i = from; i < to; i++){
                 if (str[i] == '\n') {
                     ++line;
                     line_index = 0;

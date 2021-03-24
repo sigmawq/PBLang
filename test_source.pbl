@@ -1,7 +1,7 @@
 // Comment
 // Variable declaration
 var int a = 1;
-var float c;
+var float c , ;
 
 // Constant declaration
 val int b = 2;
@@ -73,8 +73,13 @@ def range_set_default(range r : void){
 
 // Another example
 def get_random_range(void : range){
-    var range r;
+    var range r, b, g;
     r.a = 200;
     r.b = 400;
     return r;
+}
+
+// Block segment
+{
+    var float x = 1.1;
 }
