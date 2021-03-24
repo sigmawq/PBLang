@@ -10,6 +10,9 @@ class parse_table{
     std::unordered_map<const grammar_unit*,
         std::unordered_map<const grammar_unit*, std::optional<predict_set_record>>> table;
         std::unordered_map<const grammar_unit*, std::optional<predict_set_record>> dollar_column;
+
+        std::vector<const grammar_unit*> terminals;
+        std::vector<const grammar_unit*> non_terminals;
 public:
     // Return no value if cell has no valid production
     std::optional<predict_set_record>& at(const grammar_unit *row, const grammar_unit *column){
@@ -61,9 +64,6 @@ public:
                 std::vector<predict_set_record> &predict_set,
                 std::unordered_map<const grammar_unit*, follow_set> &follow_set_val){
 
-
-        std::vector<const grammar_unit*> terminals;
-        std::vector<const grammar_unit*> non_terminals;
         for (const auto &gu : universe){
             if (gu.terminal) terminals.push_back(&gu);
             else non_terminals.push_back(&gu);
@@ -112,6 +112,24 @@ public:
                 }
             }
         }
+    }
+
+    // Returns all possible terminals to reach from @gu non-terminal
+    // Returns pair <@first, @second>. @first is all terminals that are allowed from current nt. @second is whether EOS ($) is allowed
+    std::pair<std::vector<const grammar_unit*>, bool> get_all_possible_derivations(const grammar_unit *gu){
+        std::vector<const grammar_unit*> result;
+        bool eos_allowed = false;
+        for (auto terminal : terminals){
+            auto next_terminal_derivation = this->at(gu, terminal);
+            if (next_terminal_derivation.has_value()){
+                result.push_back(terminal);
+            }
+        }
+        if (this->at_dollar(gu).has_value()){
+            eos_allowed = true;
+        }
+
+        return { result, eos_allowed };
     }
 };
 

@@ -1,2 +1,7 @@
 var int a = 1;
-var int b = ;
+var int b = 2;
+
+// No return type - error
+def func(void : ){
+
+}

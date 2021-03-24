@@ -120,12 +120,23 @@ parse_tree parse_string(std::vector<bound_token> &token_stream,
 
             if (!rec.has_value()) {
                 std::string err;
+                auto allowed_derivations = pt.get_all_possible_derivations(&top_stack_node.gu);
                 pbl_utility::str_compose(err, "Unexpected token at (", std::to_string(token_stream[token_stream_index].token_value.line), ",",
                                                                        std::to_string(token_stream[token_stream_index].token_value.col), ") ", "Found ");
-                if (out_of_range_tok_stream) pbl_utility::str_compose(err, "EOS, but expected but expected one of derivations of ",
+
+                if (out_of_range_tok_stream) pbl_utility::str_compose(err, "EOS",
                                                                       (&top_stack_node)->gu.string_representation);
-                else pbl_utility::str_compose(err, token_stream[token_stream_index].gu->string_representation,
-                                              ", but expected one of derivations of ", (&top_stack_node)->gu.string_representation);
+                else pbl_utility::str_compose(err, token_stream[token_stream_index].gu->string_representation);
+
+                pbl_utility::str_compose(err, ", but expected one of the following {");
+                int i = 0;
+                for (i; i < allowed_derivations.first.size() - 1; i++){
+                    pbl_utility::str_compose(err, allowed_derivations.first[i]->string_representation, ", ");
+                }
+                pbl_utility::str_compose(err, allowed_derivations.first[i]->string_representation);
+                if (allowed_derivations.second) pbl_utility::str_compose(err, ", ", "end of stream");
+                pbl_utility::str_compose(err, "}\n");
+
                 pbl_utility::str_compose(err, " (token index: ", std::to_string(token_stream_index), ")");
                 highlight_error_point(source_str, token_stream[token_stream_index].token_value.line, token_stream[token_stream_index].token_value.col);
                 throw std::runtime_error(err);
