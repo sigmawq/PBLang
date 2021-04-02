@@ -530,8 +530,4 @@ parse_tree parse_source(tokenizer_data &td, parse_data &pd, std::string &source)
     return tree;
 }
 
-void convert_parse_to_ast(){
-    // TODO
-}
-
 #endif //LEXER_TEST_PARSE_OPERATIONS_H

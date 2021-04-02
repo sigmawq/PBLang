@@ -7,7 +7,7 @@
 
 #include <utility>
 #include <algorithm>
-#include "pbl_utility.h"
+#include "utility/pbl_utility.h"
 
 // Uses an array of jump tables to tokenize input string.
 // The longest lexeme is picked.

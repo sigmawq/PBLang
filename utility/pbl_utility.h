@@ -67,5 +67,19 @@ namespace pbl_utility{
         return result.str();
     }
 }
+void tabs_out(int tabs){
+    for (int i = 0; i < tabs; i++){
+        std::cout << ' ';
+    }
+}
+
+std::string tabs_get(int tabs){
+    std::string str;
+    for (int i = 0; i < tabs; i++){
+        str += ' ';
+    }
+    return str;
+}
+
 
 #endif //LEXER_TEST_PBL_UTILITY_H

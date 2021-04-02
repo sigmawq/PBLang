@@ -18,16 +18,12 @@
 #include "parse_table.h"
 #include "parse_string.h"
 #include "parse_tree.h"
-#include "pbl_utility.h"
+#include "utility/pbl_utility.h"
 #include "parse_operations.h"
-#include "ast_node.h"
 #include "tests.h"
-
-void tabs_out(int tabs){
-    for (int i = 0; i < tabs; i++){
-        std::cout << ' ';
-    }
-}
+#include "ast/ast.h"
+#include "ast/ast_node.h"
+#include "ast/AE_parser.h"
 
 void tree_out(parse_tree &tree, parse_node &root, int tabs = 0){
     tabs_out(tabs);
@@ -55,6 +51,21 @@ int main() {
     tree_out(parse_tree_array_decl, parse_tree_array_decl.get_root());
 
     using namespace pblang_lexer_parser_tests;
+
+    std::vector<ast_node> nodes { {VAL_INT},
+                                  {MUL},
+                                  {PAR_OPEN},
+                                  {VAL_INT},
+                                  {ADD},
+                                  {VAL_INT},
+                                  {PAR_CLOSE},
+
+    };
+
+    AE_parser parser { nodes };
+    auto result = parser.convert_to_ast();
+    std::cout << result.get().to_string_recursive();
+
 
     //T_lexer_test();
     //T_grammar_test();
