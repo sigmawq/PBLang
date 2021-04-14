@@ -10,6 +10,7 @@
 #include <string_view>
 #include "grammar.h"
 #include "parse_tree.h"
+#include "parse_table.h"
 
 void derivation_sequence_out(std::stack<size_t> stack, parse_tree &pt){
     std::cout << " -> ";

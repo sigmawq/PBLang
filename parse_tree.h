@@ -6,6 +6,7 @@
 #define LEXER_TEST_PARSE_TREE_H
 
 #include "grammar.h"
+#include "token.h"
 
 struct bound_token{
     const token &token_value;
@@ -30,7 +31,7 @@ struct parse_node {
 class parse_tree{
     std::vector<parse_node> nodes;
 
-    void _D_out(parse_node &croot, int tabs){
+    void _D_out(parse_node const& croot, int tabs){
         auto tabs_out = [](int tabs_count){
             for (int i = 0; i < tabs_count; i++){
                 std::cout << ' ';
@@ -56,7 +57,7 @@ public:
         nodes.push_back({root_gu});
     }
 
-    [[nodiscard]] parse_node& get_root() { return nodes.at(0); }
+    [[nodiscard]] parse_node const& get_root() const { return nodes[0]; }
 
     void D_out() {
         _D_out(get_root(), 0);
@@ -70,6 +71,7 @@ public:
     }
 
     parse_node& get_node(size_t node_id) { return nodes[node_id]; }
+    parse_node const& get_node_const(size_t node_id) const { return nodes[node_id]; }
 };
 
 #endif //LEXER_TEST_PARSE_TREE_H

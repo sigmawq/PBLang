@@ -5,24 +5,17 @@
 #ifndef LEXER_TEST_ABSTRACT_SYNTAX_TREE_H
 #define LEXER_TEST_ABSTRACT_SYNTAX_TREE_H
 
-#include <numeric>
-#include <unordered_set>
-#include "ast_node.h"
-#include "ast_converter.h"
-#include "AE_parser.h"
-#include <exception>
 #include "../parse_tree.h"
+#include "ast_node.h"
 
 using namespace pbl_utility;
 
 class abstract_syntax_tree {
-    ast_node root;
+    std::vector<ast_node> nodes;
 
 public:
-    explicit abstract_syntax_tree(parse_tree &parse_tree) {
-        ast_converter converter{parse_tree.get_root(), parse_tree, this->root};
-        root = converter.convert();
-    }
+    ast_node& add_node(AST_NODE_TYPE type);
+    ast_node& add_node();
 };
 
 #endif //LEXER_TEST_ABSTRACT_SYNTAX_TREE_H

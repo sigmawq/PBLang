@@ -5,10 +5,13 @@
 #ifndef LEXER_TEST_GRAMMAR_H
 #define LEXER_TEST_GRAMMAR_H
 
+#include <algorithm>
+#include <iostream>
 #include <vector>
 #include <set>
 #include <memory>
-#include <variant>
+#include <unordered_map>
+#include "utility/pbl_utility.h"
 
 // Non terminal or terminal
 struct grammar_unit{
@@ -76,9 +79,9 @@ public:
         }
         if (has_epsilon) { std::cout << "ε"; }
         std::cout << std::endl;
-    }
 #endif
-public:
+    }
+
     [[nodiscard]] std::vector<production> const& get_all_productions() const { return rhs; }
     void add_production(const production &prod){
         rhs.push_back(prod);
@@ -259,7 +262,7 @@ public:
         return position_in_first_set;
     }
 
-    static void D_first_set_out(std::unordered_map<const grammar_unit*, first_set> &first_set_val){
+    static void D_first_set_out(std::unordered_map<const grammar_unit*, first_set> &first_set_val) {
 #ifdef DEBUG_MODE
         for (const auto &pair : first_set_val){
             std::cout << pair.first->string_representation << " = " << "{";
@@ -269,9 +272,10 @@ public:
             if (pair.second.has_epsilon) std::cout << "ε";
             std::cout << "}" << std::endl;
         }
-    }
 #endif
-    static void D_follow_set_out(std::unordered_map<const grammar_unit*, follow_set> &set){
+    }
+
+    static void D_follow_set_out(std::unordered_map<const grammar_unit*, follow_set> &set) {
 #ifdef DEBUG_MODE
         for (const auto &pair : set){
             std::cout << pair.first->string_representation << " = " << "{";
@@ -281,8 +285,10 @@ public:
             if (pair.second.has_dollar) std::cout << "$";
             std::cout << "}" << std::endl;
         }
-    }
+
 #endif
+    }
+
     // Returns pair <first_set_t, bool>, where first_set_t indicates first array for every non terminal GU.
     // and bool map represents if that non terminal got an epsilon production.
     static std::unordered_map<const grammar_unit*, first_set>
@@ -417,7 +423,7 @@ public:
         return predict_set;
     }
 
-    static void D_predict_out(std::vector<predict_set_record> &predict_set){
+    static void D_predict_out(std::vector<predict_set_record> &predict_set) {
 #ifdef DEBUG_MODE
         for (auto &el : predict_set){
             if (el.prod.has_value()){
@@ -440,8 +446,8 @@ public:
             std::cout << "}";
             std::cout << std::endl;
         }
-    }
 #endif
+    }
 };
 
 #endif //LEXER_TEST_GRAMMAR_H

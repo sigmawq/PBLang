@@ -1,38 +1,24 @@
-#include <iostream>
-#include <vector>
-#include <unordered_map>
-
-#include "token.h"
-
 #define DEBUG_MODE
-
 #ifdef DEBUG_MODE
     #define DEBUG_LOG(msg) std::cout << msg << std::endl
 #else
     #define DEBUG_LOG(msg)
 #endif
 
-#include "jump_table.h"
-#include "token_reader.h"
-#include "grammar.h"
-#include "parse_table.h"
-#include "parse_string.h"
-#include "parse_tree.h"
-#include "utility/pbl_utility.h"
+#include "ast/abstract_syntax_tree.h"
 #include "parse_operations.h"
-#include "tests.h"
-#include "ast/ast.h"
+#include "utility/pbl_utility.h"
 #include "ast/ast_node.h"
-#include "ast/AE_parser.h"
+#include "ast/ast_converter.h"
 
-void tree_out(parse_tree &tree, parse_node &root, int tabs = 0){
-    tabs_out(tabs);
+void tree_out(parse_tree const& tree, parse_node const& root, int tabs = 0){
+    pbl_utility::tabs_out(tabs);
     std::cout << root.gu.string_representation;
     if (root.optional_token.has_value()) std::cout << "(type/val: " << root.optional_token.value().type << " | " << root.optional_token.value().attribute << ")";
     std::cout << std::endl;
     tabs += 2;
     for (int i = root.children.size() - 1; i >= 0; i--){
-        tree_out(tree, tree.get_node(root.children[i]), tabs);
+        tree_out(tree, tree.get_node_const(root.children[i]), tabs);
     }
 }
 
@@ -50,8 +36,6 @@ int main() {
     auto parse_tree_array_decl = parse_source(tokenizer_data, pd, source);
     tree_out(parse_tree_array_decl, parse_tree_array_decl.get_root());
 
-    using namespace pblang_lexer_parser_tests;
-
     std::vector<ast_node> nodes { {VAL_INT},
                                   {MUL},
                                   {PAR_OPEN},
@@ -62,13 +46,8 @@ int main() {
 
     };
 
-    AE_parser parser { nodes };
-    auto result = parser.convert_to_ast();
-    std::cout << result.get().to_string_recursive();
+    convert_parse_tree_to_ast(parse_tree_array_decl);
 
-
-    //T_lexer_test();
-    //T_grammar_test();
     return 0;
 }
 

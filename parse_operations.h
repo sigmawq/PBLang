@@ -6,6 +6,9 @@
 #define LEXER_TEST_PARSE_OPERATIONS_H
 
 #include "grammar.h"
+#include "parse_string.h"
+#include "jump_table.h"
+#include "token_reader.h"
 
 struct tokenizer_data{
     jump_table keywords;
@@ -248,6 +251,11 @@ void prepare_parse(parse_data &pd){
         universe.push_back({false, "OPT_DIM_DECL"});
         universe.push_back({false, "DIM_DECL"});
         universe.push_back({false, "NEXT_DIM_DECL"});
+        universe.push_back({false, "IF_STMT"});
+        universe.push_back({false, "WHILE_STMT"});
+        universe.push_back({false, "FOR_STMT"});
+        universe.push_back({false, "OPT_ELSE"});
+        universe.push_back({false, "OPT_IF_STMT"});
 
     // ** TERMINALS **
         // Arithmetic
@@ -303,6 +311,8 @@ void prepare_parse(parse_data &pd){
         universe.push_back({true, "val"});
         universe.push_back({true, "overload"});
         universe.push_back({true, "return"});
+        universe.push_back({true, "if"});
+        universe.push_back({true, "else"});
 
 
     // Other
@@ -339,6 +349,20 @@ void prepare_parse(parse_data &pd){
             {"STMT",         {"F_DECL_OVERLOAD", "STMT"}},
             {"STMT",         {"STRUCT_DECL", "STMT"}},
             {"STMT",         {"RETURN_STMT", ";", "STMT"}},
+            {"STMT",         {"IF_STMT"}},
+            {"STMT",         {"WHILE_STMT"}},
+            {"STMT",         {"FOR_STMT"}},
+
+            // Flow control
+            {"FOR_STMT",         {"for" ,"(", "VAR_DECL", ";", "A_Es", ";", "A_Es", ")", "BLOCK_SEGMENT"}},
+            {"WHILE_STMT",         {"while", "(", "A_Es", ")", "BLOCK_SEGMENT"}},
+            {"IF_STMT",         {"if", "(", "A_Es", ")", "BLOCK_SEGMENT", "OPT_ELSE"}},
+
+            {"OPT_IF_STMT",         {"if", "(", "A_Es", ")", "BLOCK_SEGMENT", "OPT_ELSE"}},
+            {"OPT_IF_STMT",         {" "}},
+
+            {"OPT_ELSE",         {"else", "OPT_IF_STMT"}},
+            {"OPT_ELSE",         {" "}},
 
             // Return statement
             {"RETURN_STMT",         {"return", "A_Es"}},
@@ -355,11 +379,11 @@ void prepare_parse(parse_data &pd){
             {"A_E",         {"/", "F", "A_E"}},
             {"A_E",         {"||", "F", "A_E"}},
             {"A_E",         {"&&", "F", "A_E"}},
-            {"A_E",         {"!", "F", "A_E"}},
-            {"A_E",         {"=", "F", "A_E"}},
-            {"A_E",         {"+=", "F", "A_E"}},
-            {"A_E",         {"*=", "F", "A_E"}},
-            {"A_E",         {"/=", "F", "A_E"}},
+            {"A_E",         {"==", "F", "A_E"}},
+            {"A_E",         {">=", "F", "A_E"}},
+            {"A_E",         {"<=", "F", "A_E"}},
+            {"A_E",         {">", "F", "A_E"}},
+            {"A_E",         {"<", "F", "A_E"}},
             {"A_E",         {" "}},
 
             // Constant declaration

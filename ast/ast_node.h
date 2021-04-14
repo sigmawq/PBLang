@@ -2,6 +2,7 @@
 #define LEXER_TEST_AST_NODE_H
 
 #include "../parse_tree.h"
+#include "../utility/pbl_utility.h"
 
 enum AST_NODE_TYPE{
     // Program root
@@ -16,6 +17,7 @@ enum AST_NODE_TYPE{
         PAR_OPEN, PAR_CLOSE,
 
         // ** FACTOR **
+        __FACTORSTART__,
 
         // Values
         VAL_INT, VAL_FP,
@@ -29,9 +31,23 @@ enum AST_NODE_TYPE{
         // Struct access
         STRUCT_ACCESS,
 
-        // Operators (not unary
-        // Higher operator has higher priority
-        POW, MUL, DIV, ADD, SUB
+        __FACTOREND__,
+
+        // Operators (not unary)
+        // Greater operator has higher priority
+        _OPERATOR_START_,
+        EQUALS,
+
+        COMP_EQUALS, COMP_GREATER_EQUALS, COMP_GREATER, COMP_LESS_EQUALS, COMP_LESS,
+
+        LOGICAL_OR, LOGICAL_AND,
+
+        POW, MUL, DIV, ADD, SUB,
+
+        __OPERATOREND__,
+
+        // Flow control
+        IF, FOR, WHILE
 };
 
 enum UNARY_OPERATOR{
@@ -46,17 +62,17 @@ struct ast_value{
 struct ast_node{
     AST_NODE_TYPE node_type;
     std::optional<ast_value> optional_value; // AST_node MAY not have a value (example: if statement node will have just a node_type, value is relevant only for some things)
-    std::vector<std::reference_wrapper<ast_node>> children;
+    std::vector<std::shared_ptr<ast_node>> children;
 
-    void add_child(std::reference_wrapper<ast_node> new_child) {
-        children.push_back(new_child);
+    void add_child(std::shared_ptr<ast_node> &new_child) {
+        children.emplace_back(new_child);
     }
 
-    void add_child_front(std::reference_wrapper<ast_node> new_child){
+    void add_child_front(std::shared_ptr<ast_node> &new_child){
         children.insert(children.begin(), new_child);
     }
-    bool is_operator() const { return node_type >= POW && node_type <= SUB; }
-    bool is_factor() const { return node_type >= VAL_INT && node_type <= STRUCT_ACCESS; }
+    [[nodiscard]] bool is_operator() const { return node_type >= _OPERATOR_START_ && node_type <= __OPERATOREND__; }
+    [[nodiscard]] bool is_factor() const { return node_type >= __FACTORSTART__ && node_type <= __FACTOREND__; }
 
     std::string to_string(){
         std::string str;
@@ -73,10 +89,10 @@ struct ast_node{
 
 private:
     static void R_to_string_recursise(std::string &str, ast_node &node, int tabs, int tabs_per_layer) {
-        pbl_utility::str_compose(str, tabs_get(tabs), node.to_string(), '\n');
+        pbl_utility::str_compose(str, pbl_utility::tabs_get(tabs), node.to_string(), '\n');
         tabs += tabs_per_layer;
         for (int i = 0; i < node.children.size(); i++){
-            R_to_string_recursise(str, node.children[i], tabs, tabs_per_layer);
+            R_to_string_recursise(str, *node.children[i], tabs, tabs_per_layer);
         }
     }
 public:
@@ -86,6 +102,8 @@ public:
         R_to_string_recursise(str, *this, tabs, tabs_per_layer);
         return str;
     }
+
+    ast_node(AST_NODE_TYPE type) : node_type(type) {}
 };
 
 #endif //LEXER_TEST_AST_NODE_H
