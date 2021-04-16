@@ -19,9 +19,19 @@ class AE_parser{
         size_t point_to_resume_from;
 
         std::string rpn_to_string(){
+            return rpn_to_string(returned_rpn);
+        }
+
+        static
+        std::string rpn_to_string(std::vector<std::shared_ptr<ast_node>> &returned_rpn){
             std::string result;
             for (auto &thing : returned_rpn){
-                result += thing->optional_value.value().value;
+                if (thing->optional_value.has_value()){
+                    result += thing->optional_value.value().value;
+                }
+                else{
+                    result += std::to_string(thing->node_type);
+                }
                 result += " ";
             }
             return result;
@@ -35,9 +45,9 @@ class AE_parser{
         std::vector<std::shared_ptr<ast_node>> rpn;
         std::stack<std::shared_ptr<ast_node>> operator_stack;
 
-        auto pop_till_operator_of_same_precedence_found = [&](AST_NODE_TYPE current_operator){
-            while (!operator_stack.empty() ||
-                    operator_stack.top()->node_type >= current_operator){
+        auto pop_till_operator_of_same_precedence_found = [&](AST_NODE_TYPE current_operator) -> void {
+            while (!operator_stack.empty() &&
+                    operator_stack.top()->node_type <= current_operator){
                 rpn.push_back(operator_stack.top());
                 operator_stack.pop();
             }
@@ -76,7 +86,7 @@ class AE_parser{
                 rpn.push_back(next_node);
             }
             else if (next_node->is_operator()){
-                if (operator_stack.empty() || next_node->node_type > operator_stack.top().get()->node_type){
+                if (operator_stack.empty() || next_node->node_type < operator_stack.top().get()->node_type){
                     operator_stack.push(next_node);
                 }
                 else {
@@ -90,6 +100,7 @@ class AE_parser{
                 throw std::runtime_error(err);
             }
             ++i;
+            pbl_utility::debug_print_nl("RPN NOW : ", rpn_resume_data::rpn_to_string(rpn), '\n');
         }
 
         pop_all_from_stack();
@@ -114,11 +125,13 @@ class AE_parser{
         auto fullfill_right_child = [&](){
             ast_resume_data result = R_convert_rpn_to_ast(rpn, start_from);
             current_node->add_child(result.returned_node);
+            start_from = result.resume_from;
         };
 
         auto fullfill_left_child = [&](){
             ast_resume_data result = R_convert_rpn_to_ast(rpn, start_from);
             current_node.get()->add_child_front(result.returned_node);
+            start_from = result.resume_from;
         };
 
         auto fullfill_child = [&](CHILD_SIDE side){
@@ -133,7 +146,7 @@ class AE_parser{
         };
 
         if (current_node->is_factor()){
-            return { current_node, --start_from };
+            return { current_node, start_from };
         }
         else if (current_node->is_operator()){
             fullfill_child(RIGHT);

@@ -80,6 +80,13 @@ namespace pbl_utility{
         }
         return str;
     }
+
+    template<typename T>
+    inline void vector_merge(std::vector<T> &destination, std::vector<T> const& source){
+        for (const T& el : source){
+            destination.push_back(el);
+        }
+    }
 }
 
 

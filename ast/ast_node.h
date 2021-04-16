@@ -5,8 +5,7 @@
 #include "../utility/pbl_utility.h"
 
 enum AST_NODE_TYPE{
-    // Program root
-        PROGRAM_ROOT,
+    STATEMENT_SEQUENCE,
 
     // For error checking
         AST_INVALID,
@@ -20,7 +19,7 @@ enum AST_NODE_TYPE{
         __FACTORSTART__,
 
         // Values
-        VAL_INT, VAL_FP,
+        IDENTIFIER_AST, VAL_INT, VAL_FP, VAL_STRING,
 
         // Function call
         F_CALL, F_CALL_OVERLOAD,

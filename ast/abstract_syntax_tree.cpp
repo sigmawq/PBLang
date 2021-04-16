@@ -5,12 +5,11 @@
 #include "abstract_syntax_tree.h"
 
 ast_node &abstract_syntax_tree::add_node(AST_NODE_TYPE type) {
-    auto &node = nodes.emplace_back();
-    node.node_type = type;
+    auto &node = nodes.emplace_back(type);
     return node;
 }
 
 ast_node &abstract_syntax_tree::add_node() {
-    return nodes.emplace_back();
+    return nodes.emplace_back(AST_INVALID);
 }
 

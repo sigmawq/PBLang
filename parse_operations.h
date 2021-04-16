@@ -60,6 +60,8 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("^", OPERATOR);
     tokenizer_data.keywords.add_keyword("**", OPERATOR);
     tokenizer_data.keywords.add_keyword("%", OPERATOR);
+    tokenizer_data.keywords.add_keyword("||", OPERATOR);
+    tokenizer_data.keywords.add_keyword("&&", OPERATOR);
     tokenizer_data.keywords.add_keyword("+=", OPERATOR);
     tokenizer_data.keywords.add_keyword("-=", OPERATOR);
     tokenizer_data.keywords.add_keyword("*=", OPERATOR);
@@ -341,7 +343,7 @@ void prepare_parse(parse_data &pd){
             // General
             {"STMT",         {" "}},
             {"STMT",         {"A_Es", ";", "STMT"}},
-            {"STMT",         {";"}},
+            {"STMT",         {";", "STMT"}},
             {"STMT",         {"VAR_DECL", ";", "STMT"}},
             {"STMT",         {"CONST_DECL", ";", "STMT"}},
             {"STMT",         {"ARR_DECL", ";", "STMT"}},
@@ -350,8 +352,8 @@ void prepare_parse(parse_data &pd){
             {"STMT",         {"STRUCT_DECL", "STMT"}},
             {"STMT",         {"RETURN_STMT", ";", "STMT"}},
             {"STMT",         {"IF_STMT"}},
-            {"STMT",         {"WHILE_STMT"}},
-            {"STMT",         {"FOR_STMT"}},
+            {"STMT",         {"WHILE_STMT", "STMT"}},
+            {"STMT",         {"FOR_STMT", "STMT"}},
 
             // Flow control
             {"FOR_STMT",         {"for" ,"(", "VAR_DECL", ";", "A_Es", ";", "A_Es", ")", "BLOCK_SEGMENT"}},
