@@ -136,38 +136,45 @@ void handle_AE(parse_tree const& pt, parse_node const& current_node_pn,
 }
 
 std::shared_ptr<ast_node> handle_F(parse_tree const& pt, parse_node const& current_node_pn){
-    auto const& first_symbol_pn = pt.get_node_const(current_node_pn.children.back());
+    const auto& opt_unary_op = pt.get_node_const(current_node_pn.children.back());
+    const auto& f_buffer_pn = pt.get_node_const(current_node_pn.children[0]);
+    auto const& first_symbol_of_f_buffer_pn = pt.get_node_const(f_buffer_pn.children.back());
 
     std::shared_ptr<ast_node> factor = std::make_shared<ast_node>(AST_NODE_TYPE::AST_INVALID);
 
     factor->optional_value.emplace();
-    if (first_symbol_pn.gu.string_representation == "OPT_UNARY_OP"){
-        std::optional<UNARY_OPERATOR> unary_operator = handle_OPT_UNARY_OP(pt, first_symbol_pn);
+
+    // Assign unary operator;
+    std::optional<UNARY_OPERATOR> unary_operator = handle_OPT_UNARY_OP(pt, opt_unary_op);
+    if (unary_operator.has_value()) factor->optional_value.value().optional_unary_operator = unary_operator;
+
+    if (first_symbol_of_f_buffer_pn.gu.string_representation == "F_IDENTIFIER"){
         factor->node_type = AST_NODE_TYPE::IDENTIFIER_AST;
-        auto const& identifier_pn = pt.get_node_const(current_node_pn.children[1]);
-        factor->optional_value->value = identifier_pn.optional_token->attribute; // Unsure about this CHECK
-        factor->optional_value->optional_unary_operator = unary_operator;
+        auto const& identifier_pn = pt.get_node_const(first_symbol_of_f_buffer_pn.children.back());
+        factor->optional_value->value = identifier_pn.optional_token->attribute;
         std::vector<std::shared_ptr<ast_node>> trailing_operators;
         handle_OPT_F_TRAIL(pt, pt.get_node_const(current_node_pn.children[0]), trailing_operators);
         for (auto& trailing_op : trailing_operators){
             factor->add_child(trailing_op);
         }
     }
-    else if (first_symbol_pn.gu.is_number){
-        if (first_symbol_pn.optional_token->type == TOKEN_TYPE::CONSTANT_INTEGER){
+    else if (first_symbol_of_f_buffer_pn.gu.string_representation == "F_NUMBER"){
+        const auto& number_pn = pt.get_node_const(first_symbol_of_f_buffer_pn.children.back());
+        if (number_pn.optional_token->type == TOKEN_TYPE::CONSTANT_INTEGER){
             factor->node_type = VAL_INT;
         }
-        else if (first_symbol_pn.optional_token->type == TOKEN_TYPE::CONSTANT_FP){
+        else if (number_pn.optional_token->type == TOKEN_TYPE::CONSTANT_FP){
             factor->node_type = VAL_FP;
         }
         else{
             throw std::exception{};
         }
-        factor->optional_value.value().value = first_symbol_pn.optional_token->attribute;
+        factor->optional_value.value().value = number_pn.optional_token->attribute;
     }
-    else if (first_symbol_pn.gu.is_string){
+    else if (first_symbol_of_f_buffer_pn.gu.string_representation == "F_STRING"){
+        const auto& string_pn = pt.get_node_const(first_symbol_of_f_buffer_pn.children.back());
         factor->node_type = VAL_STRING;
-        factor->optional_value.value().value = first_symbol_pn.optional_token->attribute;
+        factor->optional_value.value().value = string_pn.optional_token->attribute;
     }
     else {
         throw std::runtime_error("Failed to parse F");

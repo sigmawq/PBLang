@@ -31,6 +31,7 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("while", KEYWORD);
     tokenizer_data.keywords.add_keyword("if", KEYWORD);
     tokenizer_data.keywords.add_keyword("else", KEYWORD);
+    tokenizer_data.keywords.add_keyword("elif", KEYWORD);
     tokenizer_data.keywords.add_keyword("var", KEYWORD);
     tokenizer_data.keywords.add_keyword("val", KEYWORD);
     tokenizer_data.keywords.add_keyword("struct", KEYWORD);
@@ -258,6 +259,11 @@ void prepare_parse(parse_data &pd){
         universe.push_back({false, "FOR_STMT"});
         universe.push_back({false, "OPT_ELSE"});
         universe.push_back({false, "OPT_IF_STMT"});
+        universe.push_back({false, "F_BUFFER"});
+        universe.push_back({false, "F_IDENTIFIER"});
+        universe.push_back({false, "F_STRING"});
+        universe.push_back({false, "F_NUMBER"});
+        universe.push_back({false, "OPT_ELIF"});
 
     // ** TERMINALS **
         // Arithmetic
@@ -298,6 +304,7 @@ void prepare_parse(parse_data &pd){
         universe.push_back({true, "while"});
         universe.push_back({true, "struct"});
         universe.push_back({true, "def"});
+        universe.push_back({true, "elif"});
         universe.push_back({true, "arr"});
         universe.push_back({true, "void"});
         universe.push_back({true, "int"});
@@ -351,19 +358,19 @@ void prepare_parse(parse_data &pd){
             {"STMT",         {"F_DECL_OVERLOAD", "STMT"}},
             {"STMT",         {"STRUCT_DECL", "STMT"}},
             {"STMT",         {"RETURN_STMT", ";", "STMT"}},
-            {"STMT",         {"IF_STMT"}},
+            {"STMT",         {"IF_STMT", "STMT"}},
             {"STMT",         {"WHILE_STMT", "STMT"}},
             {"STMT",         {"FOR_STMT", "STMT"}},
 
             // Flow control
             {"FOR_STMT",         {"for" ,"(", "VAR_DECL", ";", "A_Es", ";", "A_Es", ")", "BLOCK_SEGMENT"}},
             {"WHILE_STMT",         {"while", "(", "A_Es", ")", "BLOCK_SEGMENT"}},
-            {"IF_STMT",         {"if", "(", "A_Es", ")", "BLOCK_SEGMENT", "OPT_ELSE"}},
+            {"IF_STMT",         {"if", "(", "A_Es", ")", "BLOCK_SEGMENT", "OPT_ELIF", "OPT_ELSE"}},
 
-            {"OPT_IF_STMT",         {"if", "(", "A_Es", ")", "BLOCK_SEGMENT", "OPT_ELSE"}},
-            {"OPT_IF_STMT",         {" "}},
+            {"OPT_ELIF",         {"elif", "(", "A_Es", ")", "BLOCK_SEGMENT", "OPT_ELIF"}},
+            {"OPT_ELIF",         {" "}},
 
-            {"OPT_ELSE",         {"else", "OPT_IF_STMT"}},
+            {"OPT_ELSE",         {"else", "BLOCK_SEGMENT"}},
             {"OPT_ELSE",         {" "}},
 
             // Return statement
@@ -486,10 +493,16 @@ void prepare_parse(parse_data &pd){
             {"NEXT_DIM_DECL", {",", "F", "NEXT_DIM_DECL"}},
             {"NEXT_DIM_DECL", {" "}},
 
-            {"F",         {"OPT_UNARY_OP", "<IDENTIFIER>", "OPT_F_TRAIL"}},
-            {"F",         {"<NUMBER>"}},
-            {"F",         {"<STRING>"}},
+            {"F",         {"OPT_UNARY_OP", "F_BUFFER"}},
             {"F",         {"(", "A_Es", ")"}},
+
+            {"F_BUFFER",         {"F_IDENTIFIER"}},
+            {"F_BUFFER",         {"F_NUMBER"}},
+            {"F_BUFFER",         {"F_STRING"}},
+
+            {"F_IDENTIFIER",         {"<IDENTIFIER>", "OPT_F_TRAIL"}},
+            {"F_NUMBER",         {"<NUMBER>"}},
+            {"F_STRING",         {"<STRING>"}},
 
             {"OPT_F_TRAIL",         {"F_TRAIL", "OPT_F_TRAIL"}},
             {"OPT_F_TRAIL",         {" "}},
