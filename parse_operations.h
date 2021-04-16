@@ -489,7 +489,7 @@ void prepare_parse(parse_data &pd){
             {"F",         {"OPT_UNARY_OP", "<IDENTIFIER>", "OPT_F_TRAIL"}},
             {"F",         {"<NUMBER>"}},
             {"F",         {"<STRING>"}},
-            {"F",         {"(" ,"A_Es", ")"}},
+            {"F",         {"(", "A_Es", ")"}},
 
             {"OPT_F_TRAIL",         {"F_TRAIL", "OPT_F_TRAIL"}},
             {"OPT_F_TRAIL",         {" "}},

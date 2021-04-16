@@ -38,7 +38,12 @@ extern std::shared_ptr<ast_node> handle_IF_STMT(parse_tree const& pt, parse_node
 
 extern std::shared_ptr<ast_node> handle_AEs(parse_tree const& pt, parse_node const& current_node_pn);
 
+extern void handle_AEs_nonresolving(parse_tree const& pt, parse_node const& current_node_pn,
+                                                         std::vector<std::shared_ptr<ast_node>> &arithmetic_expression_parsed);
+
 extern void handle_AE(parse_tree const& pt, parse_node const& current_node_pn, std::vector<std::shared_ptr<ast_node>> &arithmetic_expression_parsed);
+
+extern void handle_PARANT_AE(parse_tree const& pt, parse_node const& current_node_pn, std::vector<std::shared_ptr<ast_node>> &arithmetic_expression_parsed);
 
 extern std::shared_ptr<ast_node>  handle_F(parse_tree const& pt, parse_node const& current_node_pn);
 

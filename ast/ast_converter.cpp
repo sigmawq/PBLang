@@ -70,13 +70,46 @@ std::shared_ptr<ast_node> handle_AEs(parse_tree const& pt, parse_node const& cur
     auto const& factor_pn = pt.get_node_const(current_node_pn.children.back());
     auto const& AE_pn = pt.get_node_const(current_node_pn.children[0]);
 
+
+
     std::vector<std::shared_ptr<ast_node>> arithmetic_expression_parsed;
-    arithmetic_expression_parsed.push_back(handle_F(pt, factor_pn));
+
+    if (pt.get_node_const(factor_pn.children.back()).gu.string_representation == "("){
+        handle_PARANT_AE(pt, factor_pn, arithmetic_expression_parsed);
+    }
+    else{
+        arithmetic_expression_parsed.push_back(handle_F(pt, factor_pn));
+    }
 
     handle_AE(pt, AE_pn, arithmetic_expression_parsed);
 
     AE_parser parser { arithmetic_expression_parsed };
     return parser.convert_to_ast();
+}
+
+void handle_AEs_nonresolving(parse_tree const& pt, parse_node const& current_node_pn,
+                                                  std::vector<std::shared_ptr<ast_node>> &arithmetic_expression_parsed){
+    auto const& factor_pn = pt.get_node_const(current_node_pn.children.back());
+    auto const& AE_pn = pt.get_node_const(current_node_pn.children[0]);
+
+    if (pt.get_node_const(factor_pn.children.back()).gu.string_representation == "("){
+        handle_PARANT_AE(pt, factor_pn, arithmetic_expression_parsed);
+    }
+    else{
+        arithmetic_expression_parsed.push_back(handle_F(pt, factor_pn));
+    }
+
+    handle_AE(pt, AE_pn, arithmetic_expression_parsed);
+}
+
+void handle_PARANT_AE(parse_tree const& pt, parse_node const& current_node_pn, std::vector<std::shared_ptr<ast_node>> &arithmetic_expression_parsed){
+    auto paran_open = std::make_shared<ast_node>(PAR_OPEN);
+
+    arithmetic_expression_parsed.push_back(paran_open);
+    handle_AEs_nonresolving(pt, pt.get_node_const(current_node_pn.children[1]), arithmetic_expression_parsed);
+
+    auto paran_close = std::make_shared<ast_node>(PAR_CLOSE);
+    arithmetic_expression_parsed.push_back(paran_close);
 }
 
 void handle_AE(parse_tree const& pt, parse_node const& current_node_pn,
@@ -92,7 +125,12 @@ void handle_AE(parse_tree const& pt, parse_node const& current_node_pn,
     );
     arithmetic_expression_parsed.push_back(next_operator);
 
-    arithmetic_expression_parsed.push_back(handle_F(pt, factor_pn));
+    if (pt.get_node_const(factor_pn.children.back()).gu.string_representation == "("){
+        handle_PARANT_AE(pt, factor_pn, arithmetic_expression_parsed);
+    }
+    else{
+        arithmetic_expression_parsed.push_back(handle_F(pt, factor_pn));
+    }
 
     handle_AE(pt, recursive_next_AE_pn, arithmetic_expression_parsed);
 }
