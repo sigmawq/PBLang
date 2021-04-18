@@ -404,7 +404,7 @@ void prepare_parse(parse_data &pd){
             {"OPT_NEXT_VAR_DECL", {" "}},
 
             // Array declaration
-            {"ARR_DECL", {"ARR_SIGN", "<IDENTIFIER>", "OPT_ASSIGNMENT"}},
+            {"ARR_DECL", {"ARR_SIGN", "<IDENTIFIER>"}},
 
             // Struct declaration
             {"STRUCT_DECL", {"struct", "<IDENTIFIER>", "OPT_EXPLICIT_BYTE_ALLOC", "{", "OPT_STRUCT_VAR_DECL","}" }},
@@ -489,8 +489,8 @@ void prepare_parse(parse_data &pd){
             {"OPT_DIM_DECL", {"DIM_DECL"}},
             {"OPT_DIM_DECL", {" "}},
 
-            {"DIM_DECL", {"F", "NEXT_DIM_DECL"}},
-            {"NEXT_DIM_DECL", {",", "F", "NEXT_DIM_DECL"}},
+            {"DIM_DECL", {"A_Es", "NEXT_DIM_DECL"}},
+            {"NEXT_DIM_DECL", {",", "A_Es", "NEXT_DIM_DECL"}},
             {"NEXT_DIM_DECL", {" "}},
 
             {"F",         {"OPT_UNARY_OP", "F_BUFFER"}},

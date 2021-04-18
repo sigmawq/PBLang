@@ -47,7 +47,7 @@ int main() {
 
     std::cout << "AST converted : " << std::endl;
     auto ast_root = convert_parse_tree_to_ast(parse_tree_array_decl);
-    std::cout << ast_root->to_string_recursive() << std::endl;
+    std::cout << ast_root.value()->to_string_recursive() << std::endl;
 
     return 0;
 }
