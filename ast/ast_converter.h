@@ -2,6 +2,24 @@
 #define LEXER_TEST_AST_CONVERTER_H
 #include "ast_node.h"
 
+namespace std {
+    template<typename T>
+    using reff = std::reference_wrapper<T>;
+
+    template<typename T>
+    using opt = std::optional<T>;
+
+    template<typename T>
+    using uptr = std::unique_ptr<T>;
+
+    template<typename T>
+    using sptr = std::shared_ptr<T>;
+
+    template<typename T>
+    using wptr = std::weak_ptr<T>;
+}
+
+
 typedef std::shared_ptr<ast_node> ASTN;
 static inline ASTN new_ASTN(AST_NODE_TYPE node_type) { return std::make_shared<ast_node>(node_type); }
 
@@ -118,6 +136,10 @@ extern ASTN handle_F_INPUT(parse_tree const& pt, parse_node const& cn);
 extern ASTN handle_F_OUTPUT(parse_tree const& pt, parse_node const& cn);
 
 extern ASTN handle_F_DECL_OVERLOAD(parse_tree const& pt, parse_node & cn);
+
+extern ASTN handle_STRUCT_DECL(parse_tree const& pt, parse_node const& cn);
+
+extern void handle_OPT_STRUCT_VAR_DECL(parse_tree const& pt, parse_node const& cn, std::opt<std::vector<ASTN>> &var_container);
 
 
 #endif //LEXER_TEST_AST_CONVERTER_H

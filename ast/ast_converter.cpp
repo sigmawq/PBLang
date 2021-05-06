@@ -49,7 +49,7 @@ void handle_STMT(parse_tree const& pt, parse_node const& current_node_pn,
         action_sequence.push_back(handle_F_DECL_OVERLOAD(pt, *node));
     }
     else if (first_pn.gu.string_representation == "STRUCT_DECL"){
-        // TODO
+        action_sequence.push_back(handle_STRUCT_DECL(pt, first_pn));
     }
     else if (first_pn.gu.string_representation == "RETURN_STMT"){
         // TODO
@@ -170,6 +170,7 @@ ASTN handle_OPT_ARG_DECL(parse_tree const& pt, parse_node const& cn,
     if (!next_arg_decl.children.empty()){
         handle_OPT_ARG_DECL(pt, next_arg_decl, all_args);
     }
+    // TODO: FIX!!!
 }
 
 ASTN handle_ARR_DECL(parse_tree const& pt, parse_node const& cn){
@@ -572,4 +573,64 @@ void handle_F_TRAIL(parse_tree const& pt, parse_node const& current_node_pn,
 
 std::shared_ptr<ast_node> handle_F_CALL(parse_tree const& pt, parse_node const& current_node_pn){
     throw std::runtime_error("WIP");
+}
+
+ASTN handle_STRUCT_DECL(parse_tree const& pt, parse_node const& cn) {
+    ASTN struct_root = new_ASTN(STRUCT_DECL);
+    auto &opt_struct_var_decl_pn = pt.get_node_const(cn.children[1]);
+    auto &exp_byte_alloc_pn = pt.get_node_const(cn.children[3]);
+    auto &ident_pn = pt.get_node_const(cn.children[4]);
+
+    // Assign name
+    ASTN ident = new_ASTN(AST_JUST_TEXT);
+    ident->optional_value.emplace();
+    ident->optional_value.value().value = ident_pn.optional_token.value().attribute;
+    struct_root->add_child(ident);
+
+    // Check if struct has declared byte allocation explicitly
+    ASTN exp_byte_alloc = new_ASTN(AST_JUST_TEXT);
+    struct_root->add_child(exp_byte_alloc);
+    if (exp_byte_alloc_pn.children.empty()) {
+        exp_byte_alloc->optional_value = {};
+    }
+    else{
+        exp_byte_alloc->optional_value.emplace();
+        exp_byte_alloc->optional_value.value().value =
+                pt.get_node_const(exp_byte_alloc_pn.children[1]).optional_token->attribute;
+    }
+
+    // Parse struct fields
+    std::opt<std::vector<ASTN>> struct_fields;
+    handle_OPT_STRUCT_VAR_DECL(pt, opt_struct_var_decl_pn, struct_fields);
+
+    for (auto &field : struct_fields.value()) {
+        struct_root->add_child(field);
+    }
+
+    return struct_root;
+}
+
+void handle_OPT_STRUCT_VAR_DECL(parse_tree const& pt, parse_node const& cn, std::opt<std::vector<ASTN>> &var_container) {
+    if (!var_container.has_value()) {
+        var_container.emplace();
+    }
+
+    if (cn.children.empty()) { return; }
+    else {
+        auto &struct_decl_pn = pt.get_node_const(cn.children.back());
+
+        ASTN new_field = new_ASTN(VAR_DECL);
+        ASTN signature = get_variable_signature(pt, pt.get_node_const(struct_decl_pn.children.back()));
+        ASTN ident = new_ASTN(AST_JUST_TEXT);
+        ident->optional_value.emplace();
+        ident->optional_value.value().value = pt.get_node_const(struct_decl_pn.children[1]).optional_token->attribute;
+
+        new_field->add_child(signature);
+        new_field->add_child(ident);
+
+        var_container.value().push_back(new_field);
+
+        auto &next = pt.get_node_const(cn.children[0]);
+        handle_OPT_STRUCT_VAR_DECL(pt, next, var_container);
+    }
 }

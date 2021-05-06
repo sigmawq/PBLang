@@ -413,7 +413,7 @@ void prepare_parse(parse_data &pd){
                 {"OPT_EXPLICIT_BYTE_ALLOC", {" " }},
 
                 // Struct variable declaration
-                {"STRUCT_VAR_DECL", {"VAR_SIGN", "<IDENTIFIER>", "OPT_COMPLEX_ASSIGNMENT", ";"}},
+                {"STRUCT_VAR_DECL", {"VAR_SIGN", "<IDENTIFIER>", ";"}},
                 {"OPT_STRUCT_VAR_DECL", {"STRUCT_VAR_DECL", "OPT_STRUCT_VAR_DECL"}},
                 {"OPT_STRUCT_VAR_DECL", {" "}},
 

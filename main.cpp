@@ -35,16 +35,6 @@ int main() {
     auto parse_tree_array_decl = parse_source(tokenizer_data, pd, source);
     tree_out(parse_tree_array_decl, parse_tree_array_decl.get_root());
 
-    std::vector<ast_node> nodes { {VAL_INT},
-                                  {MUL},
-                                  {PAR_OPEN},
-                                  {VAL_INT},
-                                  {ADD},
-                                  {VAL_INT},
-                                  {PAR_CLOSE},
-
-    };
-
     std::cout << "AST converted : " << std::endl;
     auto ast_root = convert_parse_tree_to_ast(parse_tree_array_decl);
     std::cout << ast_root.value()->to_string_recursive() << std::endl;
