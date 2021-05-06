@@ -33,3 +33,7 @@ struct my_struct_1 {
 
 struct empty_struct {
 }
+
+overload def function(int a, float b, char c: double) {
+    1 + 1;
+}

@@ -119,11 +119,10 @@ ASTN handle_F_OUTPUT(parse_tree const& pt, parse_node const& cn){
 ASTN handle_F_INPUT(parse_tree const& pt, parse_node const& cn){
     std::vector<ASTN> all_args;
     ASTN node = new_ASTN(F_INPUT);
-    const auto& second_pn = pt.get_node_const(cn.children[1]);
-    const auto& first_pn = pt.get_node_const(cn.children[0]);
+    const auto& first_pn = pt.get_node_const(cn.children.back());
 
     if (first_pn.gu.string_representation == "ARG_DECL"){
-        all_args.push_back(handle_ARG_DECL(pt, second_pn));
+        all_args.push_back(handle_ARG_DECL(pt, first_pn));
     }
     else if (first_pn.gu.string_representation == "VOID_TYPE"){
         return new_ASTN(F_INPUT_VOID);
@@ -132,7 +131,9 @@ ASTN handle_F_INPUT(parse_tree const& pt, parse_node const& cn){
         throw std::runtime_error("Failed to parse F_INPUT");
     }
 
-    handle_OPT_ARG_DECL(pt, pt.get_node_const(cn.children[0]), all_args);
+    const auto& opt_arg_decl = pt.get_node_const(cn.children[0]);
+
+    handle_OPT_ARG_DECL(pt, opt_arg_decl, all_args);
 
     for (auto &el : all_args){
         node->add_child(el);
