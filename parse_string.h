@@ -96,6 +96,7 @@ parse_tree parse_string(std::vector<bound_token> &token_stream,
             }
             else {
                 std::string err = "Unexpected token at ";
+
                 pbl_utility::str_compose(err,  "(", std::to_string(token_stream[token_stream_index].token_value.line),
                                                         ",",
                                          std::to_string(token_stream[token_stream_index].token_value.col), ")",
@@ -119,12 +120,16 @@ parse_tree parse_string(std::vector<bound_token> &token_stream,
             if (!rec.has_value()) {
                 std::string err;
                 auto allowed_derivations = pt.get_all_possible_derivations(&top_stack_node.gu);
-                pbl_utility::str_compose(err, "Unexpected token at (", std::to_string(token_stream[token_stream_index].token_value.line), ",",
-                                                                       std::to_string(token_stream[token_stream_index].token_value.col), ") ", "Found ");
 
-                if (out_of_range_tok_stream) pbl_utility::str_compose(err, "EOS",
-                                                                      (&top_stack_node)->gu.string_representation);
-                else pbl_utility::str_compose(err, token_stream[token_stream_index].gu->string_representation);
+                pbl_utility::str_compose(err, "Unexpected token at (");
+                if (out_of_range_tok_stream) {
+                    pbl_utility::str_compose(err, "EOS", ")");
+                }
+                else {
+                    pbl_utility::str_compose(err, std::to_string(token_stream[token_stream_index].token_value.line), ",",
+                                             std::to_string(token_stream[token_stream_index].token_value.col), ") ", "Found ",
+                                             token_stream[token_stream_index].token_value.attribute);
+                }
 
                 pbl_utility::str_compose(err, ", but expected one of the following {");
                 int i = 0;
@@ -134,6 +139,8 @@ parse_tree parse_string(std::vector<bound_token> &token_stream,
                 pbl_utility::str_compose(err, allowed_derivations.first[i]->string_representation);
                 if (allowed_derivations.second) pbl_utility::str_compose(err, ", ", "end of stream");
                 pbl_utility::str_compose(err, "}\n");
+
+                if (out_of_range_tok_stream) throw std::runtime_error(err);
 
                 pbl_utility::str_compose(err, " (token index: ", std::to_string(token_stream_index), ")");
                 highlight_error_point(source_str, token_stream[token_stream_index].token_value.line, token_stream[token_stream_index].token_value.col);

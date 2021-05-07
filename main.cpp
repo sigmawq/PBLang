@@ -14,10 +14,18 @@
 #include "utility/scoped_timer.h"
 #include <unistd.h>
 
-int main() {
+int main(int argc, char* argv[]) {
     {
+        if (argc < 2) { throw std::runtime_error("No source file specified"); }
         scoped_timer timer { "Compilation took: " };
-        compile("../test_source.pbl");
+        std::string source { argv[1] };
+        compile(source);
+        try {
+
+        }
+        catch (std::runtime_error &err) {
+            std::cout << "Compilation error: " << err.what() << std::endl;
+        }
     }
     return 0;
 }
