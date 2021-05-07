@@ -26,7 +26,7 @@ enum AST_NODE_TYPE{
         // ** Operators ** (not unary)
         // Greater operator has higher priority
         _OPERATOR_START_,
-        COMP_EQUALS, COMP_GREATER_EQUALS, COMP_GREATER, COMP_LESS_EQUALS, COMP_LESS,
+        COMP_EQUALS, COMP_NOT_EQUALS, COMP_GREATER_EQUALS, COMP_GREATER, COMP_LESS_EQUALS, COMP_LESS,
         LOGICAL_OR, LOGICAL_AND,
         POW, MUL, DIV, ADD, SUB,
         EQUALS,
@@ -201,6 +201,9 @@ static std::string ast_enum_text(AST_NODE_TYPE type){
             break;
         case F_ARG:
             result = "F_ARG";
+            break;
+        case COMP_NOT_EQUALS:
+            result = "COMP_NOT_EQUALS";
             break;
         default:
             throw std::runtime_error("Text for enum not defined");

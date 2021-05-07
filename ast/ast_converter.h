@@ -28,10 +28,13 @@ static const std::unordered_map<std::string, AST_NODE_TYPE> parse_node_operator_
         {"-", SUB},
         {"*", MUL},
         {"/", DIV},
+        {"^", POW},
+        {"**", POW},
         {"||", LOGICAL_OR},
         {"&&", LOGICAL_AND},
         {"==", COMP_EQUALS},
         {"=", EQUALS},
+        {"!=", COMP_NOT_EQUALS},
         {">", COMP_GREATER},
         {">=", COMP_GREATER_EQUALS},
         {"<", COMP_LESS},
@@ -39,7 +42,7 @@ static const std::unordered_map<std::string, AST_NODE_TYPE> parse_node_operator_
 };
 
 static const std::unordered_map<std::string, UNARY_OPERATOR> parse_unary_node_operator_to_ast_node_type_mapping{
-        {"!", LOGICAL_NOT},
+        {"~", LOGICAL_NOT},
         {"-", MINUS},
         {"+", PLUS},
         {"|cast|", PLUS},

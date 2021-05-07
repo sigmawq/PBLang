@@ -63,6 +63,7 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("%", OPERATOR);
     tokenizer_data.keywords.add_keyword("||", OPERATOR);
     tokenizer_data.keywords.add_keyword("&&", OPERATOR);
+    tokenizer_data.keywords.add_keyword("~", OPERATOR);
     tokenizer_data.keywords.add_keyword("+=", OPERATOR);
     tokenizer_data.keywords.add_keyword("-=", OPERATOR);
     tokenizer_data.keywords.add_keyword("*=", OPERATOR);
@@ -291,11 +292,14 @@ void prepare_parse(parse_data &pd){
         universe.push_back({true, "-="});
         universe.push_back({true, "*="});
         universe.push_back({true, "/="});
+        universe.push_back({true, "^"});
+        universe.push_back({true, "**"});
 
         // Logical
         universe.push_back({true, "||"});
         universe.push_back({true, "&&"});
         universe.push_back({true, "!"});
+        universe.push_back({true, "~"});
 
         // Keywords
         universe.push_back({true, "|cast|"});
@@ -389,10 +393,13 @@ void prepare_parse(parse_data &pd){
             {"A_E",         {"||", "F", "A_E"}},
             {"A_E",         {"&&", "F", "A_E"}},
             {"A_E",         {"==", "F", "A_E"}},
+            {"A_E",         {"!=", "F", "A_E"}},
             {"A_E",         {">=", "F", "A_E"}},
             {"A_E",         {"<=", "F", "A_E"}},
             {"A_E",         {">", "F", "A_E"}},
             {"A_E",         {"<", "F", "A_E"}},
+            {"A_E",         {"^", "F", "A_E"}},
+            {"A_E",         {"**", "F", "A_E"}},
             {"A_E",         {"=", "F", "A_E"}},
             {"A_E",         {" "}},
 
@@ -523,7 +530,7 @@ void prepare_parse(parse_data &pd){
             {"OPT_UNARY_OP",         {"-"}},
             {"OPT_UNARY_OP",         {"+"}},
             {"OPT_UNARY_OP",         {"|cast|"}},
-            {"OPT_UNARY_OP",         {"!"}},
+            {"OPT_UNARY_OP",         {"~"}},
             {"OPT_UNARY_OP",         {" "}},
     };
 

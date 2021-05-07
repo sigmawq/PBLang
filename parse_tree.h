@@ -74,4 +74,15 @@ public:
     parse_node const& get_node_const(size_t node_id) const { return nodes[node_id]; }
 };
 
+static void tree_out(parse_tree const& tree, parse_node const& root, int tabs = 0){
+    pbl_utility::tabs_out(tabs);
+    std::cout << root.gu.string_representation;
+    if (root.optional_token.has_value()) std::cout << "(type/val: " << root.optional_token.value().type << " | " << root.optional_token.value().attribute << ")";
+    std::cout << std::endl;
+    tabs += 2;
+    for (int i = root.children.size() - 1; i >= 0; i--){
+        tree_out(tree, tree.get_node_const(root.children[i]), tabs);
+    }
+}
+
 #endif //LEXER_TEST_PARSE_TREE_H

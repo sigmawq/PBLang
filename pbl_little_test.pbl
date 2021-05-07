@@ -49,5 +49,7 @@ while (i == 1) {
 
     for (var int i = 0; i < 10; i = i + 1) {
         var int inside_var;
+        val float LOTTERY_CHANCE = 0.001;
+        inside_var = (10 * LOTTERY_CHANCE)^(2/3/3 || 3 && ~3);
     }
 }
