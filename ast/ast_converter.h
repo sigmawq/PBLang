@@ -31,6 +31,7 @@ static const std::unordered_map<std::string, AST_NODE_TYPE> parse_node_operator_
         {"||", LOGICAL_OR},
         {"&&", LOGICAL_AND},
         {"==", COMP_EQUALS},
+        {"=", EQUALS},
         {">", COMP_GREATER},
         {">=", COMP_GREATER_EQUALS},
         {"<", COMP_LESS},
@@ -126,7 +127,7 @@ extern ASTN handle_F_DECL(parse_tree const& pt, parse_node const& cn);
 
 extern ASTN handle_ARG_DECL(parse_tree const& pt, parse_node const& cn);
 
-extern ASTN handle_OPT_ARG_DECL(parse_tree const& pt, parse_node const& cn,
+extern void handle_OPT_ARG_DECL(parse_tree const& pt, parse_node const& cn,
                                 std::vector<ASTN> &all_args);
 
 extern ASTN handle_F_INPUT(parse_tree const& pt, parse_node const& cn);
@@ -146,5 +147,8 @@ extern ASTN handle_WHILE_STMT(parse_tree const& pt, parse_node const& cn);
 extern std::vector<ASTN> handle_ARG_CALL_S(parse_tree const& pt, parse_node const& cn);
 
 extern void handle_ARG_CALL(parse_tree const& pt, parse_node const& cn, std::vector<ASTN> &all_args);
+
+ASTN handle_FOR_STMT(parse_tree const& pt, parse_node const& cn);
+
 
 #endif //LEXER_TEST_AST_CONVERTER_H

@@ -26,13 +26,12 @@ enum AST_NODE_TYPE{
         // ** Operators ** (not unary)
         // Greater operator has higher priority
         _OPERATOR_START_,
-        EQUALS,
-
         COMP_EQUALS, COMP_GREATER_EQUALS, COMP_GREATER, COMP_LESS_EQUALS, COMP_LESS,
         LOGICAL_OR, LOGICAL_AND,
         POW, MUL, DIV, ADD, SUB,
+        EQUALS,
 
-        __OPERATOREND__,
+    __OPERATOREND__,
 
         IF, ELIF, FOR, WHILE,
         VAR_DECL, CONST_DECL, ARR_DECL,

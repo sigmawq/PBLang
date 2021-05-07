@@ -1,16 +1,16 @@
 // Comment
 // Variable declaration
 var int a = 1;
-var float c , ;
+var float c , d;
 
 // Constant declaration
 val int b = 2;
 
 // 1d array declaration
-arr int my_array;
+arr [20, 20] int my_array;
 
 // 2d array declaration
-arr int,int my_array;
+arr [30, 30] int my_array;
 
 // Function declaration
 def f(int a : int) {
@@ -42,20 +42,20 @@ struct my_struct (16){
 
 // Assignment
 variable = 1;
-variable += 2;
-variable *= 2*2;
+variable = variable +  2;
+variable = variable * 2 * 2;
 
 // Variable declaration + type modifier
 var unsigned int my_var = 1;
 
 // Function declaration with unsigned modifier + array (input, output, multiple dim)
-def foo(unsigned char c, arr int,int my_array : unsigned int){
+def foo(unsigned char c, arr [50, 50] int my_array : unsigned int){
 
 }
 
 // User defined struct and it's use
 struct user_defined_struct {
-    double a = 1.0;
+    double a;
 }
 
 var user_defined_struct my_struct = 1;

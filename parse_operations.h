@@ -377,7 +377,7 @@ void prepare_parse(parse_data &pd){
             {"RETURN_STMT",         {"return", "A_Es"}},
 
             // Block segment is defined by opening '{' and closing '}'
-            {"STMT",         {"BLOCK_SEGMENT"}},
+            {"STMT",         {"BLOCK_SEGMENT", "STMT"}},
             {"BLOCK_SEGMENT", {"{", "STMT", "}"}},
 
             // Arithmetic expr group
@@ -393,6 +393,7 @@ void prepare_parse(parse_data &pd){
             {"A_E",         {"<=", "F", "A_E"}},
             {"A_E",         {">", "F", "A_E"}},
             {"A_E",         {"<", "F", "A_E"}},
+            {"A_E",         {"=", "F", "A_E"}},
             {"A_E",         {" "}},
 
             // Constant declaration

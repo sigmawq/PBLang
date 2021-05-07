@@ -58,7 +58,10 @@ void handle_STMT(parse_tree const& pt, parse_node const& current_node_pn,
         action_sequence.push_back(handle_WHILE_STMT(pt, first_pn));
     }
     else if (first_pn.gu.string_representation == "FOR_STMT"){
-        // TODO
+        action_sequence.push_back(handle_FOR_STMT(pt, first_pn));
+    }
+    else if (first_pn.gu.string_representation == "BLOCK_SEGMENT") {
+        action_sequence.push_back(handle_BLOCK_SEGMENT(pt, first_pn));
     }
     else{
         throw std::runtime_error("ERROR IN STMT");
@@ -162,8 +165,9 @@ ASTN handle_ARG_DECL(parse_tree const& pt, parse_node const& cn){
     return arg;
 }
 
-ASTN handle_OPT_ARG_DECL(parse_tree const& pt, parse_node const& cn,
+void handle_OPT_ARG_DECL(parse_tree const& pt, parse_node const& cn,
                          std::vector<ASTN> &all_args){
+    if (cn.children.empty()) return;
     const auto& arg_decl = pt.get_node_const(cn.children[1]);
     const auto& next_arg_decl = pt.get_node_const(cn.children[0]);
 
@@ -171,7 +175,6 @@ ASTN handle_OPT_ARG_DECL(parse_tree const& pt, parse_node const& cn,
     if (!next_arg_decl.children.empty()){
         handle_OPT_ARG_DECL(pt, next_arg_decl, all_args);
     }
-    // TODO: FIX!!!
 }
 
 ASTN handle_ARR_DECL(parse_tree const& pt, parse_node const& cn){
@@ -695,4 +698,25 @@ void handle_ARG_CALL(parse_tree const& pt, parse_node const& cn, std::vector<AST
         const auto &next_arg = pt.get_node_const(cn.children[1]);
         all_args.push_back(handle_AEs(pt, next_arg));
     }
+}
+
+ASTN handle_FOR_STMT(parse_tree const& pt, parse_node const& cn) {
+    ASTN for_loop_root = new_ASTN(FOR);
+    const auto &exec_block_pn = pt.get_node_const(cn.children[0]);
+    const auto &increment_pn = pt.get_node_const(cn.children[2]);
+    const auto &condition_pn = pt.get_node_const(cn.children[4]);
+    const auto &var_decl_pn = pt.get_node_const(cn.children[6]);
+
+
+    ASTN var_decl = handle_VAR_DECL(pt, var_decl_pn);
+    ASTN condition = handle_AEs(pt, condition_pn);
+    ASTN increment = handle_AEs(pt, increment_pn);
+    ASTN exec_block = handle_BLOCK_SEGMENT(pt, exec_block_pn);
+
+    for_loop_root->add_child(var_decl);
+    for_loop_root->add_child(condition);
+    for_loop_root->add_child(increment);
+    for_loop_root->add_child(exec_block);
+
+    return for_loop_root;
 }
