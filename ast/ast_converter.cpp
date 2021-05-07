@@ -52,10 +52,10 @@ void handle_STMT(parse_tree const& pt, parse_node const& current_node_pn,
         action_sequence.push_back(handle_STRUCT_DECL(pt, first_pn));
     }
     else if (first_pn.gu.string_representation == "RETURN_STMT"){
-        // TODO
+        action_sequence.push_back(handle_RETURN_STMT(pt, first_pn));
     }
     else if (first_pn.gu.string_representation == "WHILE_STMT"){
-        // TODO
+        action_sequence.push_back(handle_WHILE_STMT(pt, first_pn));
     }
     else if (first_pn.gu.string_representation == "FOR_STMT"){
         // TODO
@@ -494,6 +494,8 @@ std::shared_ptr<ast_node> handle_F(parse_tree const& pt, parse_node const& curre
     const auto& f_buffer_pn = pt.get_node_const(current_node_pn.children[0]);
     auto const& first_symbol_of_f_buffer_pn = pt.get_node_const(f_buffer_pn.children.back());
 
+    // TODO: "(" might not be parsed for "F", check.
+
     std::shared_ptr<ast_node> factor = std::make_shared<ast_node>(AST_NODE_TYPE::AST_INVALID);
 
     factor->optional_value.emplace();
@@ -505,9 +507,11 @@ std::shared_ptr<ast_node> handle_F(parse_tree const& pt, parse_node const& curre
     if (first_symbol_of_f_buffer_pn.gu.string_representation == "F_IDENTIFIER"){
         factor->node_type = AST_NODE_TYPE::IDENTIFIER_AST;
         auto const& identifier_pn = pt.get_node_const(first_symbol_of_f_buffer_pn.children.back());
+        auto const& opt_f_trail_pn = pt.get_node_const(first_symbol_of_f_buffer_pn.children[0]);
+
         factor->optional_value->value = identifier_pn.optional_token->attribute;
         std::vector<std::shared_ptr<ast_node>> trailing_operators;
-        handle_OPT_F_TRAIL(pt, pt.get_node_const(current_node_pn.children[1]), trailing_operators);
+        handle_OPT_F_TRAIL(pt, opt_f_trail_pn, trailing_operators);
         for (auto& trailing_op : trailing_operators){
             factor->add_child(trailing_op);
         }
@@ -558,14 +562,19 @@ void handle_F_TRAIL(parse_tree const& pt, parse_node const& current_node_pn,
     auto const& only_node = pt.get_node_const(current_node_pn.children[0]);
 
     if (only_node.gu.string_representation == "F_CALL"){
-        const auto& f_call_astn = handle_F_CALL(pt, current_node_pn);
+        const auto& f_call_astn = handle_F_CALL(pt, pt.get_node_const(current_node_pn.children.back()));
         operations_on_object_array.push_back(f_call_astn);
     }
     else if (only_node.gu.string_representation == "OPT_ARR"){
-        throw std::runtime_error("WIP");
+        ASTN array_access_root = new_ASTN(ARRAY_ACCESS);
+        const auto &opt_arr = pt.get_node_const(current_node_pn.children[0]);
+        ASTN body = handle_AEs(pt, pt.get_node_const(opt_arr.children[1]));
+        array_access_root->add_child(body);
+        operations_on_object_array.push_back(array_access_root);
     }
     else if (only_node.gu.string_representation == "STRUCT_ACCESS"){
         throw std::runtime_error("WIP");
+         // TODO
     }
     else{
         throw std::exception{};
@@ -573,7 +582,13 @@ void handle_F_TRAIL(parse_tree const& pt, parse_node const& current_node_pn,
 }
 
 std::shared_ptr<ast_node> handle_F_CALL(parse_tree const& pt, parse_node const& current_node_pn){
-    throw std::runtime_error("WIP");
+    ASTN f_call_root = new_ASTN(F_CALL);
+    const auto &arg_call_s_pn = pt.get_node_const(current_node_pn.children[1]);
+    const auto &all_args = handle_ARG_CALL_S(pt, arg_call_s_pn);
+    for (auto& arg : all_args) {
+        f_call_root->add_child(const_cast<std::shared_ptr<ast_node> &>(arg));
+    }
+    return f_call_root;
 }
 
 ASTN handle_STRUCT_DECL(parse_tree const& pt, parse_node const& cn) {
@@ -633,5 +648,48 @@ void handle_OPT_STRUCT_VAR_DECL(parse_tree const& pt, parse_node const& cn, std:
 
         auto &next = pt.get_node_const(cn.children[0]);
         handle_OPT_STRUCT_VAR_DECL(pt, next, var_container);
+    }
+}
+
+ASTN handle_RETURN_STMT(parse_tree const& pt, parse_node const& cn){
+    ASTN return_root = new_ASTN(RETURN_STMT);
+    ASTN return_body = handle_AEs(pt, pt.get_node_const(cn.children[0]));
+    return_root->add_child(return_body);
+    return return_root;
+}
+
+extern ASTN handle_WHILE_STMT(parse_tree const& pt, parse_node const& cn) {
+    ASTN while_stmt_root = new_ASTN(WHILE);
+
+    ASTN exec_block = handle_BLOCK_SEGMENT(pt, pt.get_node_const(cn.children[0]));
+    ASTN condition = handle_AEs(pt, pt.get_node_const(cn.children[2]));
+
+    while_stmt_root->add_child(condition);
+    while_stmt_root->add_child(exec_block);
+
+    return while_stmt_root;
+}
+
+std::vector<ASTN> handle_ARG_CALL_S(parse_tree const& pt, parse_node const& cn) {
+    if (cn.children.empty()) {
+        // Function called with 0 arguments.
+        return {};
+    }
+    else {
+        const auto &arg_call_pn = pt.get_node_const(cn.children[0]);
+        const auto &first_arg = pt.get_node_const(cn.children[1]);
+        std::vector<ASTN> all_args;
+        all_args.push_back(handle_AEs(pt, first_arg));
+        handle_ARG_CALL(pt, arg_call_pn, all_args);
+        return all_args;
+    };
+}
+
+void handle_ARG_CALL(parse_tree const& pt, parse_node const& cn, std::vector<ASTN> &all_args){
+    if (cn.children.empty()) return;
+    else {
+        const auto &arg_call_pn = pt.get_node_const(cn.children[0]);
+        const auto &next_arg = pt.get_node_const(cn.children[1]);
+        all_args.push_back(handle_AEs(pt, next_arg));
     }
 }

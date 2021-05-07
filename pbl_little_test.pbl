@@ -36,4 +36,12 @@ struct empty_struct {
 
 overload def function(int a, float b, char c: double) {
     1 + 1;
+    return function(1, 2, 3);
+}
+
+while (1 == 1) {
+    var int a;
+    arr [1, 2] int arr_inst;
+    value[1];
+
 }

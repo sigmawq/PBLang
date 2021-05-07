@@ -81,8 +81,6 @@ extern ASTN handle_F_DECL_OVERLOAD(parse_tree const& pt, parse_node const& curre
 
 extern ASTN handle_STRUCT_DECL(parse_tree const& pt, parse_node const& current_node_pn);
 
-extern ASTN handle_RETURN_STMT(parse_tree const& pt, parse_node const& current_node_pn);
-
 extern ASTN handle_WHILE_STMT(parse_tree const& pt, parse_node const& current_node_pn);
 
 extern ASTN handle_FOR_STMT(parse_tree const& pt, parse_node const& current_node_pn);
@@ -141,5 +139,12 @@ extern ASTN handle_STRUCT_DECL(parse_tree const& pt, parse_node const& cn);
 
 extern void handle_OPT_STRUCT_VAR_DECL(parse_tree const& pt, parse_node const& cn, std::opt<std::vector<ASTN>> &var_container);
 
+extern ASTN handle_RETURN_STMT(parse_tree const& pt, parse_node const& cn);
+
+extern ASTN handle_WHILE_STMT(parse_tree const& pt, parse_node const& cn);
+
+extern std::vector<ASTN> handle_ARG_CALL_S(parse_tree const& pt, parse_node const& cn);
+
+extern void handle_ARG_CALL(parse_tree const& pt, parse_node const& cn, std::vector<ASTN> &all_args);
 
 #endif //LEXER_TEST_AST_CONVERTER_H
