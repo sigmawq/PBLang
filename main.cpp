@@ -16,12 +16,12 @@
 
 int main(int argc, char* argv[]) {
     {
-        if (argc < 2) { throw std::runtime_error("No source file specified"); }
-        scoped_timer timer { "Compilation took: " };
-        std::string source { argv[1] };
-        compile(source);
-        try {
 
+        try {
+            if (argc < 2) { throw std::runtime_error("No source file specified"); }
+            scoped_timer timer { "Compilation took: " };
+            std::string source { argv[1] };
+            compile(source);
         }
         catch (std::runtime_error &err) {
             std::cout << "Compilation error: " << err.what() << std::endl;

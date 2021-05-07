@@ -14,6 +14,7 @@ static void compile(std::string const& path) {
     prepare_parse(pd);
 
     auto source = pbl_utility::read_file(path);
+    if (source.empty()) throw std::runtime_error("Source file is empty!");
     source += '\n';
 
 #ifdef DEBUG_MODE
