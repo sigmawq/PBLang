@@ -573,8 +573,11 @@ void handle_F_TRAIL(parse_tree const& pt, parse_node const& current_node_pn,
         operations_on_object_array.push_back(array_access_root);
     }
     else if (only_node.gu.string_representation == "STRUCT_ACCESS"){
-        throw std::runtime_error("WIP");
-         // TODO
+        ASTN struct_access_root = new_ASTN(STRUCT_ACCESS);
+        const auto &field_name_pn = pt.get_node_const(only_node.children[0]);
+        struct_access_root->optional_value.emplace();
+        struct_access_root->optional_value.value().value = field_name_pn.optional_token->attribute;
+        operations_on_object_array.push_back(struct_access_root);
     }
     else{
         throw std::exception{};
