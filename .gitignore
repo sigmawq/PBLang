@@ -1,2 +1,7 @@
 cmake-build-debug
 cmake-build-release
+Makefile
+*.o
+*.cmake
+CMakeCache.txt
+CMakeFiles
