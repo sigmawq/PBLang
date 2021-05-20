@@ -1,6 +1,5 @@
 # PBLang University Project (WIP)  
 
----
 PBLang is a general purpose language developed by small team as semestrial project at Technical University of Moldova.  
 PBLang has a pretty simple syntax inherited from both Python and C/C++.  
 
