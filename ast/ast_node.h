@@ -1,8 +1,21 @@
 #ifndef LEXER_TEST_AST_NODE_H
 #define LEXER_TEST_AST_NODE_H
 
+#include <llvm/ADT/APFloat.h>
+#include <llvm/ADT/STLExtras.h>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/Verifier.h>
+
 #include "../parse_tree.h"
 #include "../utility/pbl_utility.h"
+
 
 enum AST_NODE_TYPE{
         AST_INVALID,
@@ -31,7 +44,7 @@ enum AST_NODE_TYPE{
         POW, MUL, DIV, ADD, SUB,
         EQUALS,
 
-    __OPERATOREND__,
+        __OPERATOREND__,
 
         IF, ELIF, FOR, WHILE,
         VAR_DECL, CONST_DECL, ARR_DECL,
@@ -225,7 +238,7 @@ struct ast_node{
     AST_NODE_TYPE node_type;
     std::optional<ast_value> optional_value; // AST_node MAY not have a value (example: if statement node will have just a node_type, value is relevant only for some things)
     std::vector<std::shared_ptr<ast_node>> children;
-
+    //virtual llvm::Value *codegen() = 0;
     void add_child(std::shared_ptr<ast_node> &new_child) {
         children.emplace_back(new_child);
     }
