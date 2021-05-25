@@ -354,7 +354,7 @@ std::optional<std::shared_ptr<ast_node>> handle_STMT_topmost(parse_tree const& p
     std::vector<std::shared_ptr<ast_node>> action_sequence;
 
     handle_STMT(pt, current_node_pn, action_sequence);
-    handle_STMT(pt, pt.get_node_const(current_node_pn.children[0]), action_sequence);
+    // This line caused double handling of trailing STMT -> handle_STMT(pt, pt.get_node_const(current_node_pn.children[0]), action_sequence);
 
     if (!action_sequence.empty()){
         for (auto& node : action_sequence){
