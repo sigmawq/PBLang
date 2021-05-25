@@ -1,3 +1,4 @@
+#define DEBUG_MODE
 #ifdef DEBUG_MODE
     #define DEBUG_LOG(msg) std::cout << msg << std::endl
 #else

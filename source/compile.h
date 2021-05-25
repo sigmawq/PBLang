@@ -6,6 +6,7 @@
 #define LEXER_TEST_COMPILE_H
 
 #include "parse_operations.h"
+#include "llvm_ir.h"
 
 static void compile(std::string const& path) {
     // Run Tokenizer
@@ -34,9 +35,14 @@ static void compile(std::string const& path) {
     auto ast_root = convert_parse_tree_to_ast(parse_tree_array_decl);
 
 #ifdef DEBUG_MODE
-    std::cout << "[DEBUG] AST converted : " << std::endl;
+    std::cout << "[DEBUG] AST converted: " << std::endl;
     std::cout << ast_root.value()->to_string_recursive() << std::endl;
 #endif
+
+#ifdef DEBUG_MODE
+    std::cout << "[DEBUG] IR generated:\n";
+#endif
+    generate_ir(ast_root.value());
 }
 
 #endif //LEXER_TEST_COMPILE_H

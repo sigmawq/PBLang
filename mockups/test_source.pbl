@@ -49,7 +49,7 @@ variable = variable * 2 * 2;
 var unsigned int my_var = 1;
 
 // Function declaration with unsigned modifier + array (input, output, multiple dim)
-def foo(unsigned char c, arr [50, 50] int my_array : unsigned int){
+def foo(unsigned char c, double some_D : unsigned int){
 
 }
 

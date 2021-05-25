@@ -1,16 +1,9 @@
 // This is a test PBL program
 
-def foo(void : void){
+def foo(int a, int b : int){
     // Body
 }
 
-def sum(int a, int b : int){
-    return a + b;
-}
-
-def main(void : void){
-    console_out(sum(1, 2));
-}
 
 // TODO: unsigned data type modifier DONE
 // TODO: user type declaration using val, var and in function definition DONE
