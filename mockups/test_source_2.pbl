@@ -1,9 +1,22 @@
 // This is a test PBL program
+5;
+var int a = 4;
+4+5;
+4-5;
+20+10;
+15-6*4;
 
 def foo(int a, int b : int){
     // Body
 }
 
+def sum(int a, double b : int){
+    return a + b;
+}
+
+def main(void : void){
+    console_out(sum(1, 2));
+}
 
 // TODO: unsigned data type modifier DONE
 // TODO: user type declaration using val, var and in function definition DONE
