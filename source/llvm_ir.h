@@ -49,21 +49,24 @@ std::shared_ptr<ast_node> get_child(std::shared_ptr<ast_node> &node, AST_NODE_TY
     return nullptr;
 }
 
-std::vector<llvm::Type *> get_func_args_types(std::shared_ptr<ast_node> &func_node) {
-    std::vector<llvm::Type *> result;
+std::pair<std::vector<llvm::Type *>, std::vector<std::string>> get_func_args_types(std::shared_ptr<ast_node> &func_node) {
+    std::pair<std::vector<llvm::Type *>, std::vector<std::string>> result;
     int arguments = 0;
     if (get_child(func_node, F_INPUT_VOID) == nullptr) {
-        for (auto f_input: get_child(func_node, F_INPUT)->children) {
+        for (auto f_arg: get_child(func_node, F_INPUT)->children) {
             arguments++;
-            if (auto signature = get_child(f_input, VARIABLE_SIGNATURE)) {
+            if (auto signature = get_child(f_arg, VARIABLE_SIGNATURE)) {
                 llvm::Type *signature_type = ir_str_to_type(get_child(signature, TYPE_SPEC)->optional_value->value);
+                std::string func_name = get_child(f_arg, AST_JUST_TEXT)->optional_value->value;
                 if (signature_type != nullptr) {
-                    result.push_back(signature_type);
+                    result.first.push_back(signature_type);
+                    result.second.push_back(func_name);
                 }
             }
         }
     } else {
-        result.push_back(llvm::Type::getVoidTy(*llvm_context));
+        result.first.push_back(llvm::Type::getVoidTy(*llvm_context));
+        result.second.push_back("");
     }
     return result;
 }
@@ -84,11 +87,17 @@ llvm::Function *func_to_ir(std::shared_ptr<ast_node> &func_node) {
     auto arguments_type = get_func_args_types(func_node);
 
 #ifdef DEBUG_MODE
-    std::cout << "[DEBUG] Generating IR for " << func_name << " with " << arguments_type.size() << " arguments\n";
+    std::cout << "[DEBUG] Generating IR for " << func_name << " with " << arguments_type.first.size() << " arguments\n";
 #endif
 
-    llvm::FunctionType *FT = llvm::FunctionType::get(return_type, arguments_type, false);
+    llvm::FunctionType *FT = llvm::FunctionType::get(return_type, arguments_type.first, false);
     llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, func_name, llvm_module.get());
+
+    unsigned idx = 0;
+    for(auto &Arg: F->args()){
+       Arg.setName(arguments_type.second[idx++]);
+    }
+
     return F;
 }
 
