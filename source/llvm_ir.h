@@ -26,11 +26,20 @@ static std::unique_ptr<llvm::Module> llvm_module;
 static std::unique_ptr<llvm::IRBuilder<>> llvm_builder;
 static std::map<std::string, llvm::Value *> named_values;
 
+void initialize_ir();
+llvm::Value *state_seq_to_ir(std::shared_ptr<ast_node> &node);
+llvm::Type *ir_str_to_type(std::string str_type);
+std::shared_ptr<ast_node> get_child(std::shared_ptr<ast_node> &node, AST_NODE_TYPE search_type);
+std::pair<std::vector<llvm::Type *>, std::vector<std::string>> get_func_args_types(std::shared_ptr<ast_node> &func_node);
+llvm::Function *func_to_ir(std::shared_ptr<ast_node> &func_node);
+llvm::Value *var_to_ir(std::shared_ptr<ast_node> &var_node);
+
 void initialize_ir() {
     llvm_context = std::make_unique<llvm::LLVMContext>();
     llvm_module = std::make_unique<llvm::Module>(JIT_MODULE_NAME, *llvm_context);
     llvm_builder = std::make_unique<llvm::IRBuilder<>>(*llvm_context);
 }
+
 
 
 llvm::Type *ir_str_to_type(std::string str_type) {
@@ -93,9 +102,20 @@ llvm::Function *func_to_ir(std::shared_ptr<ast_node> &func_node) {
     llvm::FunctionType *FT = llvm::FunctionType::get(return_type, arguments_type.first, false);
     llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, func_name, llvm_module.get());
 
+    named_values.clear();
     unsigned idx = 0;
     for(auto &Arg: F->args()){
        Arg.setName(arguments_type.second[idx++]);
+       named_values[std::string(Arg.getName())] = &Arg;
+    }
+
+    llvm::BasicBlock *BB = llvm::BasicBlock::Create(*llvm_context, func_name + " entry", F);
+    llvm_builder->SetInsertPoint(BB);
+
+    auto func_body = get_child(func_node, STATEMENT_SEQUENCE);
+
+    if(!func_node){
+        auto return_val =
     }
 
     return F;
@@ -105,7 +125,8 @@ llvm::Value *var_to_ir(std::shared_ptr<ast_node> &var_node) {
     std::string var_name = get_child(var_node, AST_JUST_TEXT)->optional_value->value;
     llvm::Value *V = named_values[var_name];
     if (!V) {
-        std::cout << "If you see this - something is terribly wrong\n";
+        std::cout << "If you see this - something is terribly wrong. Also this causes sigsegv :p\n";
+        return nullptr; // get danked on lmao
     }
     return V;
 
@@ -144,14 +165,14 @@ llvm::Value *expr_to_ir(std::shared_ptr<ast_node> &expr_node) {
     else return num_to_ir(expr_node);
 }
 
-void node_to_ir(std::shared_ptr<ast_node> &node) {
+llvm::Value *state_seq_to_ir(std::shared_ptr<ast_node> &node) {
     switch (node->node_type) {
         case F_DECL:
-            func_to_ir(node);
+            func_to_ir(node)->print(llvm::errs(), nullptr);
             break;     // Function declaration
 
         case VAR_DECL:
-            var_to_ir(node);
+            var_to_ir(node)->print(llvm::errs());
             break;   // Global variables
         case CONST_DECL:
             break; // Global variables
@@ -165,7 +186,7 @@ void node_to_ir(std::shared_ptr<ast_node> &node) {
         case DIV:
         case MUL:
         case COMP_GREATER:
-            expr_to_ir(node);
+            expr_to_ir(node)->print(llvm::errs());
 
 
     }
@@ -175,11 +196,12 @@ void node_to_ir(std::shared_ptr<ast_node> &node) {
 void generate_ir(std::shared_ptr<ast_node> &root) {
     initialize_ir();
     for (auto child: root->children) {
-        node_to_ir(child);
+        state_seq_to_ir(child);
     }
 
 #ifdef DEBUG_MODE
     llvm_module->print(llvm::errs(), nullptr, false, true);
+
 #endif
 }
 
