@@ -1,8 +1,12 @@
 // This is a test PBL program
 
-//var int a = 4;
+var int a = 4;
 
+{
+{
 
+}
+}
 def foo(int a, int b : int){
     // Body
 }

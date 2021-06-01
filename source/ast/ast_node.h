@@ -258,7 +258,10 @@ private:
         }
     }
 public:
-
+    std::shared_ptr<ast_node> get_child(AST_NODE_TYPE search_type) {
+        for (auto child: this->children) if (child->node_type == search_type) return child;
+        return nullptr;
+    }
     std::string to_string_recursive(int tabs = 0, int tabs_per_layer = 4) {
         std::string str;
         R_to_string_recursise(str, *this, tabs, tabs_per_layer);

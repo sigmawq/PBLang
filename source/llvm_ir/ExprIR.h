@@ -1,0 +1,22 @@
+//
+// Created by foxfurry on 6/1/21.
+//
+
+#ifndef LEXER_TEST_EXPRIR_H
+#define LEXER_TEST_EXPRIR_H
+
+#include "ir_utility.h"
+
+class ExprIR {
+public:
+    virtual ~ExprIR() {}
+    virtual llvm::Value *codegen() = 0;
+};
+
+std::unique_ptr<ExprIR> LogError(const char *Str);
+llvm::Value *LogErrorV(const char *Str);
+
+
+
+
+#endif //LEXER_TEST_EXPRIR_H

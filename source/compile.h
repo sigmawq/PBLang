@@ -6,7 +6,7 @@
 #define LEXER_TEST_COMPILE_H
 
 #include "parse_operations.h"
-#include "llvm_ir.h"
+#include "llvm_ir/llvm_ir.h"
 
 static void compile(std::string const& path) {
     // Run Tokenizer
