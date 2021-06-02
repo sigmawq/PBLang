@@ -13,6 +13,8 @@ public:
     virtual llvm::Value *codegen() = 0;
 };
 
+
+llvm::Type *str_to_type(std::string str_ty);
 std::unique_ptr<ExprIR> LogError(const char *Str);
 llvm::Value *LogErrorV(const char *Str);
 

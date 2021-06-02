@@ -5,7 +5,7 @@
 #include "CallExprIR.h"
 
 llvm::Value *CallExprIR::codegen() {
-    // Look up the name in the global module table.
+    // Look up the func_name in the global module table.
     llvm::Function *CalleeF = llvm_module->getFunction(callee);
     if (!CalleeF)
         return LogErrorV("Unknown function referenced");

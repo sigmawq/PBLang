@@ -603,7 +603,7 @@ ASTN handle_STRUCT_DECL(parse_tree const& pt, parse_node const& cn) {
     auto &exp_byte_alloc_pn = pt.get_node_const(cn.children[3]);
     auto &ident_pn = pt.get_node_const(cn.children[4]);
 
-    // Assign name
+    // Assign func_name
     ASTN ident = new_ASTN(AST_JUST_TEXT);
     ident->optional_value.emplace();
     ident->optional_value.value().value = ident_pn.optional_token.value().attribute;

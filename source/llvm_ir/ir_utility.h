@@ -20,12 +20,10 @@
 
 #define JIT_MODULE_NAME "PBLANG JIT MODULE"
 
-static std::unique_ptr<llvm::LLVMContext> llvm_context;
-static std::unique_ptr<llvm::Module> llvm_module;
-static std::unique_ptr<llvm::IRBuilder<>> llvm_builder;
-static std::map<std::string, llvm::Value *> named_values;
-
-
+inline std::unique_ptr<llvm::LLVMContext> llvm_context;
+inline std::unique_ptr<llvm::Module> llvm_module;
+inline std::unique_ptr<llvm::IRBuilder<>> llvm_builder;
+inline std::map<std::string, llvm::Value *> named_values;
 
 
 

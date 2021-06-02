@@ -27,3 +27,4 @@ llvm::Value *BinaryExprIR::codegen() {
             return LogErrorV("Invalid binary operator");
     }
 }
+

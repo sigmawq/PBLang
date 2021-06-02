@@ -9,13 +9,16 @@
 
 class BinaryExprIR: public ExprIR {
     AST_NODE_TYPE op;
-    std::unique_ptr<ExprIR> LHS, RHS;
 
 public:
-    BinaryExprIR(std::shared_ptr<ast_node> node){
+    std::unique_ptr<ExprIR> LHS, RHS;
 
+    BinaryExprIR(std::shared_ptr<ast_node> &node){
+        op = node->node_type;
     }
     llvm::Value *codegen() override;
+
+    BinaryExprIR();
 };
 
 

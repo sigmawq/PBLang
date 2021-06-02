@@ -8,15 +8,15 @@
 #include "ExprIR.h"
 
 class FuncProtoIR{
-    std::string name;
-    std::vector<std::string> args;
+    std::string func_name = "";
+    std::vector<std::string> args_name;
 
 public:
     FuncProtoIR(const std::string &_name, std::vector<std::string> _args)
-            : name(_name), args(std::move(_args)) {}
-
-    llvm::Function *codegen();
-    const std::string &getName() const { return name; }
+            : func_name(_name), args_name(std::move(_args)) {}
+    FuncProtoIR(){}
+    llvm::Function *codegen(std::shared_ptr<ast_node> node);
+    const std::string &getName() const { return func_name; }
 };
 
 std::unique_ptr<FuncProtoIR> LogErrorP(const char *Str);

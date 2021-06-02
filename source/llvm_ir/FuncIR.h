@@ -10,11 +10,10 @@
 
 class FuncIR {
     std::unique_ptr<FuncProtoIR> proto;
-    std::unique_ptr<ExprIR> body;
-
+    std::shared_ptr<ast_node> &node;
 public:
-    FuncIR(std::shared_ptr<ast_node> &node) {
-
+    FuncIR(std::shared_ptr<ast_node> &_node): node(_node) {
+        proto = std::make_unique<FuncProtoIR>();
     }
     llvm::Function *codegen();
 };
