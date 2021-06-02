@@ -45,16 +45,23 @@ llvm::Value* stmt_to_ir(std::shared_ptr<ast_node> &stmt){
 
 std::unique_ptr<ExprIR> expr_to_ir(std::shared_ptr<ast_node> &expr_node){
     if(expr_node->is_operator()){
-        auto binTmp = std::make_unique<BinaryExprIR>(expr_node);
-        binTmp->LHS = expr_to_ir(expr_node->children[0]);
-        binTmp->RHS = expr_to_ir(expr_node->children[1]);
-        return binTmp;
+        auto binary_call = std::make_unique<BinaryExprIR>(expr_node);
+        binary_call->LHS = expr_to_ir(expr_node->children[0]);
+        binary_call->RHS = expr_to_ir(expr_node->children[1]);
+        return binary_call;
     }
     else if(expr_node->node_type == VAL_INT || expr_node->node_type == VAL_FP){
         return std::make_unique<NumberExprIR>(expr_node);
     }
     else if(expr_node->node_type == IDENTIFIER_AST){
-        return std::make_unique<IdentifierExprIR>(expr_node);
+        auto identifier_call =  std::make_unique<IdentifierExprIR>(expr_node);
+        if(auto f_call = expr_node->get_child(F_CALL)){
+            identifier_call->isFuncCall = true;
+            for(auto child: f_call->children){
+                identifier_call->args.push_back(expr_to_ir(child));
+            }
+        }
+        return identifier_call;
     }
 
 }

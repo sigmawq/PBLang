@@ -2,11 +2,14 @@
 
 
 
-
-
 def foo(int a, int b: float){
-    a = a + 5;
-    return a*2;
+    return a*a + 2*a*b + b*b;
+}
+
+def main(int a:void){
+    foo(4,5);
+    a = a + 4;
+    return a;
 }
 
 // TODO: unsigned data type modifier DONE

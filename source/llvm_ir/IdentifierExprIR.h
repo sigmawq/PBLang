@@ -9,10 +9,12 @@
 
 class IdentifierExprIR: public ExprIR {
     std::string name;
+
 public:
+    bool isFuncCall = false;
+    std::vector<std::unique_ptr<ExprIR>> args;
     IdentifierExprIR(std::shared_ptr<ast_node> node) {
         name = node->optional_value->value;
-
     }
     llvm::Value *codegen() override;
 };
