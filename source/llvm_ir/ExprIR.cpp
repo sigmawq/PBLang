@@ -23,3 +23,11 @@ llvm::Value *LogErrorV(const char *Str) {
     LogError(Str);
     return nullptr;
 }
+
+llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *TheFunction,
+                                          std::string VarName) {
+    llvm::IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
+                     TheFunction->getEntryBlock().begin());
+    return TmpB.CreateAlloca(llvm::Type::getDoubleTy(*llvm_context), 0,
+                             VarName.c_str());
+}

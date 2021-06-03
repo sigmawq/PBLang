@@ -10,6 +10,7 @@
 #include "CallExprIR.h"
 #include "NumberExprIR.h"
 #include "IdentifierExprIR.h"
+#include "VariableExprIR.h"
 
 llvm::Value* stmt_to_ir(std::shared_ptr<ast_node> &stmt);
 std::unique_ptr<ExprIR> expr_to_ir(std::shared_ptr<ast_node> &expr_node);
@@ -23,7 +24,7 @@ llvm::Value* stmt_to_ir(std::shared_ptr<ast_node> &stmt){
             return expr_to_ir(child->children[0])->codegen();
         }
         else if(child->node_type == F_DECL){
-            auto func = func_to_ir(child)->codegen();
+            auto func = std::make_unique<FuncIR>(child)->codegen();
             auto body = child->get_child(STATEMENT_SEQUENCE);
 
             llvm::BasicBlock *BB = llvm::BasicBlock::Create(*llvm_context, func->getName(), func);
@@ -34,6 +35,11 @@ llvm::Value* stmt_to_ir(std::shared_ptr<ast_node> &stmt){
             llvm_builder->CreateRet(return_value);
 
             llvm::verifyFunction(*func);
+        }
+        else if(child->node_type == VAR_DECL){
+            auto var = std::make_unique<VariableExprIR>(child);
+            var->body = expr_to_ir(child->children[2]);
+            var->codegen();
         }
         else {
             expr_to_ir(child)->codegen();
@@ -63,11 +69,7 @@ std::unique_ptr<ExprIR> expr_to_ir(std::shared_ptr<ast_node> &expr_node){
         }
         return identifier_call;
     }
-
-}
-
-std::unique_ptr<FuncIR> func_to_ir(std::shared_ptr<ast_node> &func_node){
-    return std::make_unique<FuncIR>(func_node);
+    return nullptr;
 }
 
 void generate_ir(std::shared_ptr<ast_node> &root) {
