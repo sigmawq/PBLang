@@ -1,15 +1,13 @@
 // This is a test PBL program
 
-def foo(void : void){
-    // Body
+
+def foo(int x: float){
+    return (1+2+x)*(x+(1+2));
 }
 
-def sum(int a, int b : int){
-    return a + b;
-}
-
-def main(void : void){
-    console_out(sum(1, 2));
+def main(void:int){
+    var double abc = 4;
+    return foo(abc);
 }
 
 // TODO: unsigned data type modifier DONE

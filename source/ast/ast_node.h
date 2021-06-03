@@ -1,6 +1,7 @@
 #ifndef LEXER_TEST_AST_NODE_H
 #define LEXER_TEST_AST_NODE_H
 
+
 #include "../parse_tree.h"
 #include "../utility/pbl_utility.h"
 
@@ -31,7 +32,7 @@ enum AST_NODE_TYPE{
         POW, MUL, DIV, ADD, SUB,
         EQUALS,
 
-    __OPERATOREND__,
+        __OPERATOREND__,
 
         IF, ELIF, FOR, WHILE,
         VAR_DECL, CONST_DECL, ARR_DECL,
@@ -225,7 +226,6 @@ struct ast_node{
     AST_NODE_TYPE node_type;
     std::optional<ast_value> optional_value; // AST_node MAY not have a value (example: if statement node will have just a node_type, value is relevant only for some things)
     std::vector<std::shared_ptr<ast_node>> children;
-
     void add_child(std::shared_ptr<ast_node> &new_child) {
         children.emplace_back(new_child);
     }
@@ -258,7 +258,10 @@ private:
         }
     }
 public:
-
+    std::shared_ptr<ast_node> get_child(AST_NODE_TYPE search_type) {
+        for (auto child: this->children) if (child->node_type == search_type) return child;
+        return nullptr;
+    }
     std::string to_string_recursive(int tabs = 0, int tabs_per_layer = 4) {
         std::string str;
         R_to_string_recursise(str, *this, tabs, tabs_per_layer);
