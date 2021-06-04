@@ -11,6 +11,7 @@
 #include "NumberExprIR.h"
 #include "IdentifierExprIR.h"
 #include "VariableExprIR.h"
+#include "IfExprIR.h"
 
 llvm::Value* stmt_to_ir(std::shared_ptr<ast_node> &stmt);
 std::unique_ptr<ExprIR> expr_to_ir(std::shared_ptr<ast_node> &expr_node);
@@ -19,7 +20,8 @@ std::unique_ptr<FuncIR> func_to_ir(std::shared_ptr<ast_node> &func_node);
 llvm::Value* stmt_to_ir(std::shared_ptr<ast_node> &stmt){
     if(stmt->node_type != STATEMENT_SEQUENCE)return nullptr;
 
-    for(auto child: stmt->children){
+    for(unsigned idx = 0; idx < stmt->children.size(); idx++){
+        auto child = stmt->children[idx];
         if(child->node_type == RETURN_STMT){
             return expr_to_ir(child->children[0])->codegen();
         }
@@ -40,6 +42,18 @@ llvm::Value* stmt_to_ir(std::shared_ptr<ast_node> &stmt){
             auto var = std::make_unique<VariableExprIR>(child);
             var->body = expr_to_ir(child->children[2]);
             var->codegen();
+        }
+        else if(child->node_type == IF){
+            auto var = std::make_unique<IfExprIR>(child);
+            var->if_cond = expr_to_ir(child->children[0]);
+            var->if_true = stmt_to_ir(child->children[1]);
+            if(child->children.size()>2){
+                var->if_false = stmt_to_ir(child->children[2]);
+            }
+            else if(idx != stmt->children.size()-1 && stmt->children[idx+1]->node_type == STATEMENT_SEQUENCE){
+                var->if_false = stmt_to_ir(stmt->children[idx+1]);
+                idx++;
+            }
         }
         else {
             expr_to_ir(child)->codegen();

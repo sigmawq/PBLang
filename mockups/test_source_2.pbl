@@ -1,13 +1,22 @@
 // This is a test PBL program
 
 
-def foo(int x: float){
-    return (1+2+x)*(x+(1+2));
+def foo(void: int){
+    var int a = 4+4+6;
+    return a;
 }
 
 def main(void:int){
-    var double abc = 4;
-    return foo(abc);
+    var int a =4;
+    if(a < 3){
+        a = 55;
+    }
+    elif(a < 2){
+        a = 34;
+    }
+    {   // this is else?
+
+    }
 }
 
 // TODO: unsigned data type modifier DONE
