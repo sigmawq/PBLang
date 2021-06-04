@@ -50,6 +50,7 @@ tokenizer_data prepare_tokenizer(){
     tokenizer_data.keywords.add_keyword("|cast|", KEYWORD);
     tokenizer_data.keywords.add_keyword("=", OPERATOR);
     tokenizer_data.keywords.add_keyword("<", OPERATOR);
+    tokenizer_data.keywords.add_keyword(">", OPERATOR);
     tokenizer_data.keywords.add_keyword("<=", OPERATOR);
     tokenizer_data.keywords.add_keyword(">=", OPERATOR);
     tokenizer_data.keywords.add_keyword("==", OPERATOR);
