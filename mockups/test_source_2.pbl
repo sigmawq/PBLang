@@ -9,7 +9,7 @@ def bar(void: double){
 }
 
 def baz(double x: double){
-    if (x < 4) {
+    if (x) {
         return foo();
     }
     {

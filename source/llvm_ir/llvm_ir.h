@@ -45,16 +45,17 @@ llvm::Value* stmt_to_ir(std::shared_ptr<ast_node> &stmt){
         }
         else if(child->node_type == IF){
             auto var = std::make_unique<IfExprIR>(child);
-            var->if_cond = expr_to_ir(child->children[0]);
+            var->if_cond = expr_to_ir(child->children[0])->codegen();
+            var->if_cond = llvm_builder->CreateFCmpONE(var->if_cond, llvm::ConstantFP::get(*llvm_context, llvm::APFloat(0.0)), "ifcond");
 
             llvm::Function *F = llvm_builder->GetInsertBlock()->getParent();
 
             llvm::BasicBlock *ThenBB =
                     llvm::BasicBlock::Create(*llvm_context, "then", F);
             llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(*llvm_context, "else");
-            llvm::BasicBlock *MergeBB = llvm::BasicBlock::Create(*llvm_context, "ifcont");
+            llvm::BasicBlock *MergeBB = llvm::BasicBlock::Create(*llvm_context, "ifcond");
 
-            llvm_builder->CreateCondBr(var->if_cond->codegen(), ThenBB, ElseBB);
+            llvm_builder->CreateCondBr(var->if_cond, ThenBB, ElseBB);
 
             llvm_builder->SetInsertPoint(ThenBB);
             var->if_true = stmt_to_ir(child->children[1]);

@@ -10,8 +10,7 @@
 class IfExprIR: ExprIR {
 
 public:
-    std::unique_ptr<ExprIR> if_cond;
-    llvm::Value * if_true, * if_false;
+    llvm::Value * if_cond,* if_true, * if_false;
     IfExprIR(std::shared_ptr<ast_node> node){
 
     }
