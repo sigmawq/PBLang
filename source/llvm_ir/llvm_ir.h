@@ -12,6 +12,7 @@
 #include "IdentifierExprIR.h"
 #include "VariableExprIR.h"
 #include "IfExprIR.h"
+#include "StringExprIR.h"
 
 llvm::Value* stmt_to_ir(std::shared_ptr<ast_node> &stmt);
 std::unique_ptr<ExprIR> expr_to_ir(std::shared_ptr<ast_node> &expr_node);
@@ -108,6 +109,9 @@ std::unique_ptr<ExprIR> expr_to_ir(std::shared_ptr<ast_node> &expr_node){
     }
     else if(expr_node->node_type == VAL_INT || expr_node->node_type == VAL_FP){
         return std::make_unique<NumberExprIR>(expr_node);
+    }
+    else if(expr_node->node_type == VAL_STRING){
+        return std::make_unique<StringExprIR>(expr_node);
     }
     else if(expr_node->node_type == IDENTIFIER_AST){
         auto identifier_call = std::make_unique<IdentifierExprIR>(expr_node);

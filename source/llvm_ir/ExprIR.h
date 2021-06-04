@@ -21,5 +21,4 @@ llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *TheFunction,
                                                 std::string VarName);
 
 
-
 #endif //LEXER_TEST_EXPRIR_H

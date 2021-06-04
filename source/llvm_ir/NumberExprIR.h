@@ -12,10 +12,7 @@ class NumberExprIR : public ExprIR{
 
 public:
     NumberExprIR(std::shared_ptr<ast_node> node){
-        switch (node->node_type) {
-            case VAL_INT: val = (int)std::stoi(node->optional_value->value); break;
-            case VAL_FP: val = std::stod(node->optional_value->value); break;
-        }
+        val = std::stod(node->optional_value->value);
     }
     llvm::Value *codegen() override;
 };

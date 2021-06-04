@@ -6,8 +6,8 @@
 
 llvm::Type *str_to_type(std::string str_ty){
     if(str_ty=="int")return llvm::Type::getInt32Ty(*llvm_context);
-    else if(str_ty=="double")return llvm::Type::getFloatTy(*llvm_context);
-    else if(str_ty=="float")return llvm::Type::getDoubleTy(*llvm_context);
+    else if(str_ty=="double")return llvm::Type::getDoubleTy(*llvm_context);
+    else if(str_ty=="float")return llvm::Type::getFloatTy(*llvm_context);
     else{
         return nullptr;
     }

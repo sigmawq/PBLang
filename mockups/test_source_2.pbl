@@ -5,16 +5,12 @@ def foo(void: double){
 }
 
 def bar(void: double){
-    return 12.5;
+    return 12;
 }
 
-def baz(double x: double){
-    if (x) {
-        return foo();
-    }
-    {
-        return bar();
-    }
+def baz(double x: void){
+    var string a = "abcd";
+    var int b = 4;
 }
 
 def main(void:int){

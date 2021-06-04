@@ -23,6 +23,13 @@ llvm::Value *BinaryExprIR::codegen() {
         case COMP_LESS:
             L = llvm_builder->CreateFCmpULT(L,R,"cmptmp");
             return llvm_builder->CreateUIToFP(L, llvm::Type::getDoubleTy(*llvm_context), "cmptmp");
+        case COMP_GREATER:
+            L = llvm_builder->CreateFCmpULT(R,L,"cmptmp");
+            return llvm_builder->CreateUIToFP(L, llvm::Type::getDoubleTy(*llvm_context), "cmptmp");
+        case LOGICAL_OR:
+            return llvm_builder->CreateOr(L,R, "ortmp");
+        case LOGICAL_AND:
+            return llvm_builder->CreateAnd(L,R,"andtmp");
         default:
             return LogErrorV("Invalid binary operator");
     }

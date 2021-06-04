@@ -15,7 +15,7 @@ llvm::Value *VariableExprIR::codegen(){
             return nullptr;
     }
     else{
-        init_val = llvm::ConstantFP::get(*llvm_context, llvm::APFloat(0.0));
+        init_val = llvm::ConstantInt::get(*llvm_context, llvm::APInt(32, 0, true));
     }
 
     llvm::AllocaInst *Alloca = CreateEntryBlockAlloca(F, var_name);
