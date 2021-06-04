@@ -18,7 +18,7 @@ llvm::Value *VariableExprIR::codegen(){
         init_val = llvm::ConstantInt::get(*llvm_context, llvm::APInt(32, 0, true));
     }
 
-    llvm::AllocaInst *Alloca = CreateEntryBlockAlloca(F, var_name);
+    llvm::AllocaInst *Alloca = CreateEntryBlockAlloca(F, var_name, init_val->getType());
     llvm_builder->CreateStore(init_val, Alloca);
 
     named_values[var_name] = Alloca;

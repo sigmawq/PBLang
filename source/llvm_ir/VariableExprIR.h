@@ -9,17 +9,11 @@
 
 class VariableExprIR: public ExprIR {
     std::string var_name = "";
-    llvm::Type *var_type = nullptr;
 
 public:
     std::unique_ptr<ExprIR> body;
 
     VariableExprIR(std::shared_ptr<ast_node> node){
-        if(auto variable_signature = node->get_child(VARIABLE_SIGNATURE)){
-            if (auto type_spec = variable_signature->get_child(TYPE_SPEC)){
-                var_type = str_to_type(type_spec->optional_value->value);
-            }
-        }
         if(auto ast_just_text = node->get_child(AST_JUST_TEXT)){
             var_name = ast_just_text->optional_value->value;
         }

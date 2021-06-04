@@ -8,6 +8,7 @@ llvm::Type *str_to_type(std::string str_ty){
     if(str_ty=="int")return llvm::Type::getInt32Ty(*llvm_context);
     else if(str_ty=="double")return llvm::Type::getDoubleTy(*llvm_context);
     else if(str_ty=="float")return llvm::Type::getFloatTy(*llvm_context);
+    else if(str_ty=="string")return llvm::Type::getInt8PtrTy(*llvm_context);
     else{
         return nullptr;
     }
@@ -25,9 +26,9 @@ llvm::Value *LogErrorV(const char *Str) {
 }
 
 llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *TheFunction,
-                                          std::string VarName) {
+                                          std::string VarName, llvm::Type *VarType) {
     llvm::IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
                      TheFunction->getEntryBlock().begin());
-    return TmpB.CreateAlloca(llvm::Type::getDoubleTy(*llvm_context), 0,
+    return TmpB.CreateAlloca(VarType, 0,
                              VarName.c_str());
 }

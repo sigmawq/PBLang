@@ -1,20 +1,13 @@
 // This is a test PBL program
 
-def foo(void: double){
-    return 10.5;
+def printf(string a, int b:int){
+    return 4.4;
 }
 
-def bar(void: double){
-    return 12;
-}
-
-def baz(double x: void){
-    var string a = "abcd";
-    var int b = 4;
-}
-
-def main(void:int){
-    return 4;
+def main(void:void){
+    var int a = 5;
+    printf("%d", a);
+    return 0;
 }
 
 // TODO: unsigned data type modifier DONE

@@ -18,7 +18,7 @@ llvm::Type *str_to_type(std::string str_ty);
 std::unique_ptr<ExprIR> LogError(const char *Str);
 llvm::Value *LogErrorV(const char *Str);
 llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *TheFunction,
-                                                std::string VarName);
+                                                std::string VarName, llvm::Type *VarType);
 
 
 #endif //LEXER_TEST_EXPRIR_H
