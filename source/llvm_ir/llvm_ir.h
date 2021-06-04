@@ -46,7 +46,27 @@ llvm::Value* stmt_to_ir(std::shared_ptr<ast_node> &stmt){
         else if(child->node_type == IF){
             auto var = std::make_unique<IfExprIR>(child);
             var->if_cond = expr_to_ir(child->children[0]);
+
+            llvm::Function *F = llvm_builder->GetInsertBlock()->getParent();
+
+            llvm::BasicBlock *ThenBB =
+                    llvm::BasicBlock::Create(*llvm_context, "then", F);
+            llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(*llvm_context, "else");
+            llvm::BasicBlock *MergeBB = llvm::BasicBlock::Create(*llvm_context, "ifcont");
+
+            llvm_builder->CreateCondBr(var->if_cond->codegen(), ThenBB, ElseBB);
+
+            llvm_builder->SetInsertPoint(ThenBB);
             var->if_true = stmt_to_ir(child->children[1]);
+            if(!var->if_true){
+                return nullptr;
+            }
+            llvm_builder->CreateBr(MergeBB);
+            ThenBB = llvm_builder->GetInsertBlock();
+
+            F->getBasicBlockList().push_back(ElseBB);
+            llvm_builder->SetInsertPoint(ElseBB);
+
             if(child->children.size()>2){
                 var->if_false = stmt_to_ir(child->children[2]);
             }
@@ -54,6 +74,21 @@ llvm::Value* stmt_to_ir(std::shared_ptr<ast_node> &stmt){
                 var->if_false = stmt_to_ir(stmt->children[idx+1]);
                 idx++;
             }
+            if(!var->if_false){
+                return nullptr;
+            }
+            llvm_builder->CreateBr(MergeBB);
+            ElseBB = llvm_builder->GetInsertBlock();
+
+            F->getBasicBlockList().push_back(MergeBB);
+            llvm_builder->SetInsertPoint(MergeBB);
+            auto PHIType = var->if_true->getType();
+            llvm::PHINode *PN =
+                    llvm_builder->CreatePHI(PHIType, 2, "iftmp");
+
+            PN->addIncoming(var->if_true, ThenBB);
+            PN->addIncoming(var->if_false, ElseBB);
+            return PN;
         }
         else {
             expr_to_ir(child)->codegen();
@@ -74,7 +109,7 @@ std::unique_ptr<ExprIR> expr_to_ir(std::shared_ptr<ast_node> &expr_node){
         return std::make_unique<NumberExprIR>(expr_node);
     }
     else if(expr_node->node_type == IDENTIFIER_AST){
-        auto identifier_call =  std::make_unique<IdentifierExprIR>(expr_node);
+        auto identifier_call = std::make_unique<IdentifierExprIR>(expr_node);
         if(auto f_call = expr_node->get_child(F_CALL)){
             identifier_call->isFuncCall = true;
             for(auto child: f_call->children){
