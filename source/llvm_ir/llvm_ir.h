@@ -15,6 +15,9 @@
 #include "StringExprIR.h"
 #include "ForExprIR.h"
 
+#include <fstream>
+
+
 llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt);
 
 std::unique_ptr<ExprIR> expr_to_ir(std::shared_ptr<ast_node> &expr_node);
@@ -205,18 +208,29 @@ std::unique_ptr<ExprIR> expr_to_ir(std::shared_ptr<ast_node> &expr_node) {
 }
 
 void generate_ir(std::shared_ptr<ast_node> &root) {
+    LLVMInitializeNativeTarget();
+    LLVMInitializeNativeAsmPrinter();
+    LLVMInitializeNativeAsmParser();
+
+    auto JTMB = llvm::orc::JITTargetMachineBuilder::detectHost();
     llvm_context = std::make_unique<llvm::LLVMContext>();
     llvm_module = std::make_unique<llvm::Module>(JIT_MODULE_NAME, *llvm_context);
+    llvm_module->setDataLayout(*JTMB->getDefaultDataLayoutForTarget());
+
+    TheFPM = std::make_unique<llvm::legacy::FunctionPassManager>(llvm_module.get());
+
     llvm_builder = std::make_unique<llvm::IRBuilder<>>(llvm_module->getContext());
 
-
     declarePrintf();
-
     stmt_to_ir(root);
 
 #ifdef DEBUG_MODE
     llvm_module->print(llvm::errs(), nullptr, false, false);
 #endif
+    std::error_code EC;
+    llvm::raw_fd_ostream Path("module_one", EC, llvm::sys::fs::F_None);
+    llvm::WriteBitcodeToFile(*llvm_module, Path);
+
 }
 
 

@@ -1,12 +1,8 @@
-
-
-def printstar(int a: void){
-    for(var int i = 1; i < a; 1){
-        putchard(42);
-    }
+def foo(int a, int b: int){
+    return a + b;
 }
 
 def main(void:void){
-    printstar(100);
+    printf("%d", foo(4,256));
 }
 
