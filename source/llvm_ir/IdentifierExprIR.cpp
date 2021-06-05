@@ -11,6 +11,7 @@ llvm::Value *IdentifierExprIR::codegen() {
         if (!V) {
             return LogErrorV("Unknown variable func_name");
         }
+        return llvm_builder->CreateLoad(V, name.c_str());
     }
     else{
         llvm::Function *F = llvm_module->getFunction(name);
@@ -18,7 +19,7 @@ llvm::Value *IdentifierExprIR::codegen() {
         if(!F){
             return LogErrorV("Unknown function referenced");
         }
-        if(F->arg_size() != args.size()){
+        if(F->arg_size() != args.size() && !F->isVarArg()){
             return LogErrorV("Incorrect # arguments passed");
         }
 

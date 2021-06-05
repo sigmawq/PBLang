@@ -5,6 +5,6 @@
 #include "StringExprIR.h"
 
 llvm::Value *StringExprIR::codegen() {
-    return llvm_builder->CreateGlobalStringPtr(llvm::StringRef(value));
+    return llvm_builder->CreateGlobalStringPtr(value);
 
 }

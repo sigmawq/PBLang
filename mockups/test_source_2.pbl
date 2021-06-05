@@ -1,16 +1,12 @@
-// This is a test PBL program
 
-def printf(string a, int b:int){
-    return 4.4;
+
+def printstar(int a: void){
+    for(var int i = 1; i < a; 1){
+        putchard(42);
+    }
 }
 
 def main(void:void){
-    var int a = 5;
-    printf("%d", a);
-    return 0;
+    printstar(100);
 }
 
-// TODO: unsigned data type modifier DONE
-// TODO: user type declaration using val, var and in function definition DONE
-// TODO: arr in function declaration DONE
-// TODO: struct access by '.' DONE

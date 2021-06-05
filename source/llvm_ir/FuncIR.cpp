@@ -6,18 +6,16 @@
 
 llvm::Function *FuncIR::codegen() {
     // First, check for an existing function from a previous 'extern' declaration.
-    llvm::Function *TheFunction = llvm_module->getFunction(proto->getName());
+    llvm::Function *function_obj = llvm_module->getFunction(proto->getName());
     //;
 
-    if (!TheFunction)
-        TheFunction = proto->codegen(node);
+    if (!function_obj)
+        function_obj = proto->codegen(node);
 
-    if (!TheFunction)
+    if (!function_obj)
         return nullptr;
 
-    named_values.clear();
-    for (auto &Arg : TheFunction->args())
-        named_values[std::string(Arg.getName())] = &Arg;
 
-    return TheFunction;
+
+    return function_obj;
 }

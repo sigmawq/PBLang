@@ -23,7 +23,7 @@
 inline std::unique_ptr<llvm::LLVMContext> llvm_context;
 inline std::unique_ptr<llvm::Module> llvm_module;
 inline std::unique_ptr<llvm::IRBuilder<>> llvm_builder;
-inline std::map<std::string, llvm::Value *> named_values;
+inline std::map<std::string, llvm::AllocaInst *> named_values;
 
 
 

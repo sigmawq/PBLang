@@ -18,7 +18,6 @@ public:
     }
     llvm::Value *codegen() override;
 
-    BinaryExprIR();
 };
 
 

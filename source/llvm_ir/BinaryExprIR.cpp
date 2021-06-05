@@ -12,6 +12,7 @@ llvm::Value *BinaryExprIR::codegen() {
         return nullptr;
     }
     switch (op) {
+
         case ADD:
             return llvm_builder->CreateFAdd(L, R, "addtmp");
         case SUB:
@@ -30,6 +31,8 @@ llvm::Value *BinaryExprIR::codegen() {
             return llvm_builder->CreateOr(L,R, "ortmp");
         case LOGICAL_AND:
             return llvm_builder->CreateAnd(L,R,"andtmp");
+        case EQUALS:
+            return llvm_builder->CreateStore(R, named_values[L->getName().str()]);
         default:
             return LogErrorV("Invalid binary operator");
     }
