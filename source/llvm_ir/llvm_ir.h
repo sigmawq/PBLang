@@ -56,11 +56,11 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
                 llvm::AllocaInst *args_alloca = CreateEntryBlockAlloca(func, Arg.getName().str(), Arg.getType());
                 llvm_builder->CreateStore(&Arg, args_alloca);
                 named_values[std::string(Arg.getName())] = args_alloca;
-
             }
 
             auto return_value = stmt_to_ir(body);
-            llvm_builder->SetInsertPoint(BB);
+
+            //llvm_builder->SetInsertPoint(BB);
             llvm_builder->CreateRet(return_value);
 
             llvm::verifyFunction(*func);
@@ -68,20 +68,31 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
         else if (child->node_type == IF) {
             auto var = std::make_unique<IfExprIR>(child);
             var->if_cond = expr_to_ir(child->children[0])->codegen();
-            var->if_cond = llvm_builder->CreateFCmpONE(var->if_cond,
-                                                       llvm::ConstantFP::get(*llvm_context, llvm::APFloat(0.0)),
-                                                       "ifcond");
+
+
+            if(var->if_cond->getType()->isIntegerTy()){
+                var->if_cond = llvm_builder->CreateICmpNE(var->if_cond,
+                                                          llvm::ConstantInt::get(*llvm_context, llvm::APInt(var->if_cond->getType()->getIntegerBitWidth(), 0, true)),
+                                                          "ifcond");
+            }
+            else{
+                var->if_cond = llvm_builder->CreateFCmpONE(var->if_cond,
+                                                          llvm::ConstantFP::get(*llvm_context, llvm::APFloat(0.0)),
+                                                          "ifcond");
+            }
+
 
             llvm::Function *F = llvm_builder->GetInsertBlock()->getParent();
 
             llvm::BasicBlock *ThenBB =
                     llvm::BasicBlock::Create(*llvm_context, "then", F);
             llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(*llvm_context, "else");
-            llvm::BasicBlock *MergeBB = llvm::BasicBlock::Create(*llvm_context, "ifcond");
+            llvm::BasicBlock *MergeBB = llvm::BasicBlock::Create(*llvm_context, "ifcontrol");
 
             llvm_builder->CreateCondBr(var->if_cond, ThenBB, ElseBB);
 
             llvm_builder->SetInsertPoint(ThenBB);
+
             var->if_true = stmt_to_ir(child->children[1]);
             if (!var->if_true) {
                 return nullptr;
@@ -92,9 +103,11 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
             F->getBasicBlockList().push_back(ElseBB);
             llvm_builder->SetInsertPoint(ElseBB);
 
-            if (child->children.size() > 2) {
+            if (child->children.size() == 3) {
+                child->children[2]->node_type = IF;
                 var->if_false = stmt_to_ir(child->children[2]);
-            } else if (idx != stmt->children.size() - 1 && stmt->children[idx + 1]->node_type == STATEMENT_SEQUENCE) {
+            }
+            if (idx != stmt->children.size() - 1 && stmt->children[idx + 1]->node_type == STATEMENT_SEQUENCE) {
                 var->if_false = stmt_to_ir(stmt->children[idx + 1]);
                 idx++;
             }
@@ -144,7 +157,8 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
                 step_val = for_obj->step->codegen();
                 if (!step_val)
                     return nullptr;
-            } else {
+            }
+            else {
                 step_val = llvm::ConstantInt::get(*llvm_context, llvm::APInt(32, 1, true));
             }
             llvm::Value *next_var = llvm_builder->CreateFAdd(variable, step_val, "nextvar");
@@ -172,7 +186,8 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
 
             return llvm::ConstantFP::getNullValue(llvm::Type::getDoubleTy(*llvm_context));
 
-        } else {
+        }
+        else {
             expr_to_ir(child)->codegen();
         }
 

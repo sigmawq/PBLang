@@ -1,8 +1,13 @@
-def foo(int a, int b: int){
-    return a + b;
+
+def baz (int x:string){
+    if (x > 2){
+        return "DA";
+    }
+    {
+        return "NET";
+    }
 }
 
-def main(void:void){
-    printf("%d", foo(4,256));
+def main(void: void){
+    printf(baz(1));
 }
-
