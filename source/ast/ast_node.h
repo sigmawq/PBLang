@@ -34,7 +34,7 @@ enum AST_NODE_TYPE{
 
         __OPERATOREND__,
 
-        IF, ELIF, FOR, WHILE,
+        IF, FOR, WHILE,
         VAR_DECL, CONST_DECL, ARR_DECL,
         STRUCT_DECL, RETURN_STMT,
         F_DECL, F_DECL_OVERLOAD,
@@ -46,8 +46,7 @@ enum AST_NODE_TYPE{
 
         TYPE_SPEC,
         F_INPUT, F_OUTPUT, F_INPUT_VOID, F_OUTPUT_VOID,
-        F_ARG
-
+        F_ARG, ELSE
 };
 
 static std::string ast_enum_text(AST_NODE_TYPE type){
@@ -55,7 +54,7 @@ static std::string ast_enum_text(AST_NODE_TYPE type){
     switch (type) {
         case WHILE: result = "WHILE"; break;
         case FOR: result = "FOR"; break;
-        case ELIF: result = "ELIF"; break;
+        case ELSE: result = "ELSE"; break;
         case STATEMENT_SEQUENCE:
             result = "STATEMENT_SEQUENCE";
             break;
@@ -217,6 +216,26 @@ enum UNARY_OPERATOR{
     PLUS, MINUS, CAST, LOGICAL_NOT
 };
 
+static std::string unary_op_to_text(UNARY_OPERATOR uo) {
+    std::string res;
+    switch (uo) {
+
+        case PLUS:
+            res = "PLUS";
+            break;
+        case MINUS:
+            res = "MINUS";
+            break;
+        case CAST:
+            res = "CAST";
+            break;
+        case LOGICAL_NOT:
+            res = "LOGICAL_NOT";
+            break;
+    }
+    return res;
+}
+
 struct ast_value{
     std::optional<UNARY_OPERATOR> optional_unary_operator;
     std::string value;
@@ -242,7 +261,7 @@ struct ast_node{
         if (optional_value.has_value()){
             pbl_utility::str_compose(str, " | VALUE: ");
             if (optional_value.value().optional_unary_operator.has_value()){
-                pbl_utility::str_compose(str, "[UNARY OP TYPE: ",std::to_string(optional_value.value().optional_unary_operator.value()), "], ");
+                pbl_utility::str_compose(str, "[UNARY OP TYPE: ",unary_op_to_text(optional_value.value().optional_unary_operator.value()), "], ");
             }
             pbl_utility::str_compose(str, optional_value.value().value);
         }

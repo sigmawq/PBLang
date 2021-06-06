@@ -383,13 +383,17 @@ ASTN handle_IF_STMT(parse_tree const& pt, parse_node const& current_node_pn){
     node->add_child(condition);
     node->add_child(exec_if_true);
 
+    ASTN current_node = node;
     for (ASTN &astn : elifs_gathered){
-        node->add_child(astn);
+        current_node->add_child(astn);
+        current_node = current_node->children.back();
     }
 
     if (!opt_else_pn.children.empty()){
         ASTN exec_if_false = handle_BLOCK_SEGMENT(pt, pt.get_node_const(opt_else_pn.children[0]));
-        node->children.push_back(exec_if_false);
+        ASTN else_block = new_ASTN(ELSE);
+        else_block->add_child(exec_if_false);
+        current_node->add_child(else_block);
     }
 
     return node;
@@ -414,7 +418,7 @@ void handle_ELIF_recursive(parse_tree const& pt, parse_node const& current_node_
     const auto& exec_if_true_pn = pt.get_node_const(current_node_pn.children[1]);
     const auto& next_elif_pn = pt.get_node_const(current_node_pn.children[0]);
 
-    ASTN elif_astn = new_ASTN(ELIF);
+    ASTN elif_astn = new_ASTN(AST_NODE_TYPE::ELSE);
     auto condition_astn = handle_AEs(pt, condition_pn);
     auto exec_if_true_astn = handle_BLOCK_SEGMENT(pt, exec_if_true_pn);
     elif_astn->add_child(condition_astn);

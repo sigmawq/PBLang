@@ -1,0 +1,14 @@
+if (value == 22) {
+    if (a == a) {
+        a = ~a;
+    }
+}
+elif (value > 33) {
+    var bool fixed = true;
+}
+elif (earth == "flat") {
+    var string str = "123";
+}
+else {
+    var int yes = 1;
+}
