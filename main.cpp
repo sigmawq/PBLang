@@ -5,7 +5,6 @@
     #define DEBUG_LOG(msg)
 #endif
 
-#include "source/ast/abstract_syntax_tree.h"
 #include "source/parse_operations.h"
 #include "source/utility/pbl_utility.h"
 #include "source/ast/ast_node.h"
