@@ -16,6 +16,8 @@ public:
     IdentifierExprIR(std::shared_ptr<ast_node> node) {
         name = node->optional_value->value;
     }
+
+    std::string getName() { return name; }
     llvm::Value *codegen() override;
 };
 

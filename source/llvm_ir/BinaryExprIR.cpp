@@ -3,8 +3,27 @@
 //
 
 #include "BinaryExprIR.h"
-
+#include "IdentifierExprIR.h"
 llvm::Value *BinaryExprIR::codegen() {
+    if(op == EQUALS){
+        llvm::Value *variable_value = RHS->codegen();
+
+        auto L = static_cast<IdentifierExprIR *>(LHS.get());
+        if(!L){
+            return LogErrorV("Destination of '=' must be a variable");
+        }
+        else if(!variable_value){
+            return nullptr;
+        }
+
+        llvm::Value *target_variable = named_values[L->getName()];
+        if(!target_variable){
+            return LogErrorV("Unknown variable name");
+        }
+        llvm_builder->CreateStore(variable_value, target_variable);
+        return variable_value;
+    }
+
     llvm::Value *L = LHS->codegen(),
                 *R = RHS->codegen();
 
@@ -36,8 +55,6 @@ llvm::Value *BinaryExprIR::codegen() {
             case COMP_GREATER:
                 L = llvm_builder->CreateFCmpULT(R,L,"cmptmp");
                 return llvm_builder->CreateUIToFP(L, llvm::Type::getFloatTy(*llvm_context), "cmptmp");
-            case EQUALS:
-                return llvm_builder->CreateStore(R, named_values[L->getName().str()]);
             default:
                 return LogErrorV("Invalid binary operator");
         }
@@ -59,8 +76,6 @@ llvm::Value *BinaryExprIR::codegen() {
             return llvm_builder->CreateOr(L,R, "ortmp");
         case LOGICAL_AND:
             return llvm_builder->CreateAnd(L,R,"andtmp");
-        case EQUALS:
-            return llvm_builder->CreateStore(R, named_values[L->getName().str()]);
         default:
             return LogErrorV("Invalid binary operator");
     }

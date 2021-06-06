@@ -17,6 +17,7 @@
 
 #include <fstream>
 
+llvm::Function *doNothing;
 
 llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt);
 
@@ -35,6 +36,23 @@ void declarePrintf() {
                                    "printf",
                                    llvm_module.get());
 }
+
+void declareDoNothing() {
+    llvm::FunctionType *doNothingType =
+            llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context), llvm::None,
+                                    false);
+
+    doNothing =
+            llvm::Function::Create(doNothingType,
+                                   llvm::Function::ExternalLinkage,
+                                   "llvm.donothing",
+                                   llvm_module.get());
+}
+
+void DoNothing(){
+    llvm_builder->CreateCall(doNothing);
+}
+
 
 llvm::Value *if_to_ir(std::shared_ptr<ast_node> &if_node, std::shared_ptr<ast_node> &less_else){
     auto var = std::make_unique<IfExprIR>(if_node);
@@ -81,6 +99,9 @@ llvm::Value *if_to_ir(std::shared_ptr<ast_node> &if_node, std::shared_ptr<ast_no
         var->if_false = stmt_to_ir(less_else);
         less_else = nullptr;
     }
+    else{
+        DoNothing();
+    }
 
 
     llvm_builder->CreateBr(MergeBB);
@@ -101,6 +122,8 @@ llvm::Value *if_to_ir(std::shared_ptr<ast_node> &if_node, std::shared_ptr<ast_no
 llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
     if (stmt->node_type != STATEMENT_SEQUENCE)return nullptr;
 
+    llvm::Value * return_val = nullptr;
+
     for (unsigned idx = 0; idx < stmt->children.size(); idx++) {
         auto child = stmt->children[idx];
         if (child->node_type == RETURN_STMT) {
@@ -119,11 +142,14 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
                 llvm_builder->CreateStore(&Arg, args_alloca);
                 named_values[std::string(Arg.getName())] = args_alloca;
             }
-
             auto return_value = stmt_to_ir(body);
 
-            //llvm_builder->SetInsertPoint(BB);
-            llvm_builder->CreateRet(return_value);
+            if(func->getReturnType()->isVoidTy()){
+                llvm_builder->CreateRet(nullptr);
+            }
+            else {
+                llvm_builder->CreateRet(return_value);
+            }
 
             llvm::verifyFunction(*func);
         }
@@ -134,8 +160,7 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
                 idx++;
             }
 
-            return if_to_ir(child, less_else);
-
+            return_val = if_to_ir(child, less_else);
         }
         else if (child->node_type == FOR) {
             auto for_obj = std::make_unique<ForExprIR>(child);
@@ -194,15 +219,13 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
             else
                 named_values.erase(for_obj->var_name);
 
-            return llvm::ConstantFP::getNullValue(llvm::Type::getDoubleTy(*llvm_context));
-
         }
         else {
-            expr_to_ir(child)->codegen();
+            return_val = expr_to_ir(child)->codegen();
         }
 
     }
-    return nullptr;
+    return return_val;
 }
 
 std::unique_ptr<ExprIR> expr_to_ir(std::shared_ptr<ast_node> &expr_node) {
@@ -247,6 +270,7 @@ void generate_ir(std::shared_ptr<ast_node> &root) {
     llvm_builder = std::make_unique<llvm::IRBuilder<>>(llvm_module->getContext());
 
     declarePrintf();
+    declareDoNothing();
     stmt_to_ir(root);
 
 #ifdef DEBUG_MODE

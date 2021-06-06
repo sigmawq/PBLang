@@ -1,19 +1,19 @@
 
-def test(int x: string){
-    if(x > 10){
-        return "Bolche 10";
-    }
-    elif(x > 7){
-        return "Bolche 7";
-    }
-    elif(x > 4){
-        return "Bolche 4";
-    }
-    {
-        return "Mecnshe 4";
-    }
-}
 
 def main(void: void){
-    printf("%s", test(0));
+    var int a = 17;
+    printf("Start");
+    if(a > 15){
+        printf(">15");
+    }
+    elif(a > 10){
+        printf(">10");
+    }
+    elif(a > 5){
+        printf(">5");
+    }
+    {
+        printf("<5");
+    }
+    printf("End");
 }
