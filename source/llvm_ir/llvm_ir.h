@@ -36,6 +36,68 @@ void declarePrintf() {
                                    llvm_module.get());
 }
 
+llvm::Value *if_to_ir(std::shared_ptr<ast_node> &if_node, std::shared_ptr<ast_node> &less_else){
+    auto var = std::make_unique<IfExprIR>(if_node);
+    var->if_cond = expr_to_ir(if_node->children[0])->codegen();
+    var->if_false = nullptr;
+    if(var->if_cond->getType()->isIntegerTy()){
+        var->if_cond = llvm_builder->CreateICmpNE(var->if_cond,
+                                                  llvm::ConstantInt::get(*llvm_context, llvm::APInt(var->if_cond->getType()->getIntegerBitWidth(), 0, true)),
+                                                  "ifcond");
+    }
+    else{
+        var->if_cond = llvm_builder->CreateFCmpONE(var->if_cond,
+                                                   llvm::ConstantFP::get(*llvm_context, llvm::APFloat(0.0)),
+                                                   "ifcond");
+    }
+
+
+    llvm::Function *F = llvm_builder->GetInsertBlock()->getParent();
+
+    llvm::BasicBlock *ThenBB =
+            llvm::BasicBlock::Create(*llvm_context, "then", F);
+    llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(*llvm_context, "else");
+    llvm::BasicBlock *MergeBB = llvm::BasicBlock::Create(*llvm_context, "ifcontrol");
+
+    llvm_builder->CreateCondBr(var->if_cond, ThenBB, ElseBB);
+
+    llvm_builder->SetInsertPoint(ThenBB);
+
+    var->if_true = stmt_to_ir(if_node->children[1]);
+    if (!var->if_true) {
+        return nullptr;
+    }
+    llvm_builder->CreateBr(MergeBB);
+    ThenBB = llvm_builder->GetInsertBlock();
+
+    F->getBasicBlockList().push_back(ElseBB);
+    llvm_builder->SetInsertPoint(ElseBB);
+
+    if (if_node->children.size() == 3) {
+        if_node->children[2]->node_type = IF;
+        var->if_false = if_to_ir(if_node->children[2], less_else);   // recursively parse "else if"
+    }
+    else if (less_else != nullptr){
+        var->if_false = stmt_to_ir(less_else);
+        less_else = nullptr;
+    }
+
+
+    llvm_builder->CreateBr(MergeBB);
+    ElseBB = llvm_builder->GetInsertBlock();
+
+    F->getBasicBlockList().push_back(MergeBB);
+    llvm_builder->SetInsertPoint(MergeBB);
+    auto PHIType = var->if_true->getType();
+    auto reservedValues = (var->if_false?2:1);
+    llvm::PHINode *PN =
+            llvm_builder->CreatePHI(PHIType, reservedValues, "iftmp");
+
+    PN->addIncoming(var->if_true, ThenBB);
+    if(reservedValues == 2)PN->addIncoming(var->if_false, ElseBB);
+    return PN;
+}
+
 llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
     if (stmt->node_type != STATEMENT_SEQUENCE)return nullptr;
 
@@ -66,68 +128,14 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
             llvm::verifyFunction(*func);
         }
         else if (child->node_type == IF) {
-            auto var = std::make_unique<IfExprIR>(child);
-            var->if_cond = expr_to_ir(child->children[0])->codegen();
-
-
-            if(var->if_cond->getType()->isIntegerTy()){
-                var->if_cond = llvm_builder->CreateICmpNE(var->if_cond,
-                                                          llvm::ConstantInt::get(*llvm_context, llvm::APInt(var->if_cond->getType()->getIntegerBitWidth(), 0, true)),
-                                                          "ifcond");
-            }
-            else{
-                var->if_cond = llvm_builder->CreateFCmpONE(var->if_cond,
-                                                          llvm::ConstantFP::get(*llvm_context, llvm::APFloat(0.0)),
-                                                          "ifcond");
-            }
-
-
-            llvm::Function *F = llvm_builder->GetInsertBlock()->getParent();
-
-            llvm::BasicBlock *ThenBB =
-                    llvm::BasicBlock::Create(*llvm_context, "then", F);
-            llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(*llvm_context, "else");
-            llvm::BasicBlock *MergeBB = llvm::BasicBlock::Create(*llvm_context, "ifcontrol");
-
-            llvm_builder->CreateCondBr(var->if_cond, ThenBB, ElseBB);
-
-            llvm_builder->SetInsertPoint(ThenBB);
-
-            var->if_true = stmt_to_ir(child->children[1]);
-            if (!var->if_true) {
-                return nullptr;
-            }
-            llvm_builder->CreateBr(MergeBB);
-            ThenBB = llvm_builder->GetInsertBlock();
-
-            F->getBasicBlockList().push_back(ElseBB);
-            llvm_builder->SetInsertPoint(ElseBB);
-
-            if (child->children.size() == 3) {
-                auto blank_node = std::make_shared<ast_node>(STATEMENT_SEQUENCE);
-                child->children[2]->node_type = IF;
-                blank_node->add_child(child);
-                var->if_false = stmt_to_ir(blank_node);
-            }
+            std::shared_ptr<ast_node> less_else = nullptr;
             if (idx != stmt->children.size() - 1 && stmt->children[idx + 1]->node_type == STATEMENT_SEQUENCE) {
-                var->if_false = stmt_to_ir(stmt->children[idx + 1]);
+                less_else = stmt->children[idx + 1];
                 idx++;
             }
-            if (!var->if_false) {
-                return nullptr;
-            }
-            llvm_builder->CreateBr(MergeBB);
-            ElseBB = llvm_builder->GetInsertBlock();
 
-            F->getBasicBlockList().push_back(MergeBB);
-            llvm_builder->SetInsertPoint(MergeBB);
-            auto PHIType = var->if_true->getType();
-            llvm::PHINode *PN =
-                    llvm_builder->CreatePHI(PHIType, 2, "iftmp");
+            return if_to_ir(child, less_else);
 
-            PN->addIncoming(var->if_true, ThenBB);
-            PN->addIncoming(var->if_false, ElseBB);
-            return PN;
         }
         else if (child->node_type == FOR) {
             auto for_obj = std::make_unique<ForExprIR>(child);

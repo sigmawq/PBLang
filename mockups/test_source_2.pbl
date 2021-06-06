@@ -1,23 +1,19 @@
 
-def fib(int x: int){
-    if (x < 3){
-        return 1;
+def test(int x: string){
+    if(x > 10){
+        return "Bolche 10";
     }
-    elif (x > 2){
-        return 2;
+    elif(x > 7){
+        return "Bolche 7";
     }
-    elif (x > 3){
-        return 2;
-    }
-    elif (x > 4){
-        return 6;
+    elif(x > 4){
+        return "Bolche 4";
     }
     {
-        var int result = fib(x-1)+fib(x-2);
-        return result;
+        return "Mecnshe 4";
     }
 }
 
 def main(void: void){
-    printf("%d", fib(15));
+    printf("%s", test(0));
 }
