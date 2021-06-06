@@ -21,5 +21,9 @@ llvm::Value *CallExprIR::codegen() {
             return nullptr;
     }
 
-    return llvm_builder->CreateCall(CalleeF, ArgsV, "calltmp");
+    std::string tmp_call_name = "";
+    if(!CalleeF->getReturnType()->isVoidTy()){
+        tmp_call_name = "calltmp";
+    }
+    return llvm_builder->CreateCall(CalleeF, ArgsV, tmp_call_name);
 }

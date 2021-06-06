@@ -12,6 +12,8 @@ class StringExprIR: public ExprIR {
 public:
     StringExprIR(std::shared_ptr<ast_node> node){
         value = node->optional_value->value;
+        value = value.substr(1,value.size()-2);
+
     }
     llvm::Value *codegen() override;
 

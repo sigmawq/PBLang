@@ -30,7 +30,11 @@ llvm::Value *IdentifierExprIR::codegen() {
                 return nullptr;
             }
         }
-        V = llvm_builder->CreateCall(F, args_val, "calltmp");
+        std::string tmp_call_name = "";
+        if(!F->getReturnType()->isVoidTy()){
+            tmp_call_name = "calltmp";
+        }
+        V = llvm_builder->CreateCall(F, args_val, tmp_call_name);
     }
     return V;
 }

@@ -37,6 +37,18 @@ void declarePrintf() {
                                    llvm_module.get());
 }
 
+void declarePutchar(){
+    llvm::FunctionType *putcharType =
+            llvm::FunctionType::get(llvm::Type::getInt32Ty(*llvm_context), llvm::Type::getInt32Ty(*llvm_context),
+                                    false);
+
+    llvm::Function *putcharFunc =
+            llvm::Function::Create(putcharType,
+                                   llvm::Function::ExternalLinkage,
+                                   "putchar",
+                                   llvm_module.get());
+}
+
 void declareDoNothing() {
     llvm::FunctionType *doNothingType =
             llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context), llvm::None,
@@ -179,7 +191,8 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
             llvm::PHINode *variable = llvm_builder->CreatePHI(start_val->getType(), 2, for_obj->var_name);
             variable->addIncoming(start_val, pre_header_bb);
 
-            llvm::Value *oldVal = named_values[for_obj->var_name];
+
+            auto oldVal = named_values[for_obj->var_name];
             //named_values[for_obj->var_name] = variable;
             auto body = child->get_child(STATEMENT_SEQUENCE);
             if (!body)
@@ -196,15 +209,36 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
             else {
                 step_val = llvm::ConstantInt::get(*llvm_context, llvm::APInt(32, 1, true));
             }
-            llvm::Value *next_var = llvm_builder->CreateFAdd(variable, step_val, "nextvar");
+            llvm::Value *next_var = nullptr;
+
+            if(variable->getType()->isFloatTy()){
+                if(!step_val->getType()->isFloatTy())
+                    step_val = llvm_builder->CreateSIToFP(step_val, llvm::Type::getFloatTy(*llvm_context), "SItoFP");
+
+                next_var = llvm_builder->CreateFAdd(variable, step_val, "nextvar");
+            }
+            else if(variable->getType()->isIntegerTy()){
+                if(!step_val->getType()->isIntegerTy())
+                    step_val = llvm_builder->CreateFPToSI(step_val, llvm::Type::getInt32Ty(*llvm_context), "FPtoSI");
+                next_var = llvm_builder->CreateAdd(variable, step_val, "nextvar");
+            }
             llvm::Value *end_cond = for_obj->end->codegen();
 
             if (!end_cond)
                 return nullptr;
-            end_cond = llvm_builder->CreateFCmpONE(end_cond,
-                                                   llvm::ConstantFP::get(*llvm_context,
-                                                                         llvm::APFloat(0.0)),
-                                                   "loopcond");
+
+            if(variable->getType()->isFloatTy()){
+                end_cond = llvm_builder->CreateFCmpONE(end_cond,
+                                                       llvm::ConstantFP::get(*llvm_context,
+                                                                             llvm::APFloat(0.0)),
+                                                       "loopcond");
+            }
+            else{
+                end_cond = llvm_builder->CreateICmpNE(end_cond,
+                                                       llvm::ConstantInt::get(*llvm_context, llvm::APInt(end_cond->getType()->getIntegerBitWidth(), 0, true)),
+                                                       "loopcond");
+            }
+
             llvm::BasicBlock *loop_end_bb = llvm_builder->GetInsertBlock();
             llvm::BasicBlock *after_bb = llvm::BasicBlock::Create(*llvm_context, "afterloop", F);
 
@@ -213,11 +247,10 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
 
             variable->addIncoming(next_var, loop_end_bb);
 
-            if (oldVal)
-                1;
-                //named_values[for_obj->var_name] = oldVal;
-            else
-                named_values.erase(for_obj->var_name);
+//            if (oldVal)
+//                named_values[for_obj->var_name] = oldVal;
+//            else
+//                named_values.erase(for_obj->var_name);
 
         }
         else {
@@ -270,7 +303,9 @@ void generate_ir(std::shared_ptr<ast_node> &root) {
     llvm_builder = std::make_unique<llvm::IRBuilder<>>(llvm_module->getContext());
 
     declarePrintf();
+    declarePutchar();
     declareDoNothing();
+
     stmt_to_ir(root);
 
 #ifdef DEBUG_MODE
