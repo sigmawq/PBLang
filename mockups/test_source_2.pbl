@@ -3,6 +3,15 @@ def fib(int x: int){
     if (x < 3){
         return 1;
     }
+    elif (x > 2){
+        return 2;
+    }
+    elif (x > 3){
+        return 2;
+    }
+    elif (x > 4){
+        return 6;
+    }
     {
         var int result = fib(x-1)+fib(x-2);
         return result;

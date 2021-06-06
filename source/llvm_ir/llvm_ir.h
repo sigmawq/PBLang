@@ -104,8 +104,10 @@ llvm::Value *stmt_to_ir(std::shared_ptr<ast_node> &stmt) {
             llvm_builder->SetInsertPoint(ElseBB);
 
             if (child->children.size() == 3) {
+                auto blank_node = std::make_shared<ast_node>(STATEMENT_SEQUENCE);
                 child->children[2]->node_type = IF;
-                var->if_false = stmt_to_ir(child->children[2]);
+                blank_node->add_child(child);
+                var->if_false = stmt_to_ir(blank_node);
             }
             if (idx != stmt->children.size() - 1 && stmt->children[idx + 1]->node_type == STATEMENT_SEQUENCE) {
                 var->if_false = stmt_to_ir(stmt->children[idx + 1]);
