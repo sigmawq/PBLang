@@ -4,10 +4,11 @@ def fib(int x: int){
         return 1;
     }
     {
-        return fib(x-1)+fib(x-2);
+        var int result = fib(x-1)+fib(x-2);
+        return result;
     }
 }
 
 def main(void: void){
-    printf("%d", fib(6));
+    printf("%d", fib(15));
 }
