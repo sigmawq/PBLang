@@ -297,7 +297,7 @@ void generate_ir(std::shared_ptr<ast_node> &root) {
     llvm_context = std::make_unique<llvm::LLVMContext>();
     llvm_module = std::make_unique<llvm::Module>(JIT_MODULE_NAME, *llvm_context);
     llvm_module->setDataLayout(*JTMB->getDefaultDataLayoutForTarget());
-
+    llvm_module->setTargetTriple(JTMB->getTargetTriple().str());
     TheFPM = std::make_unique<llvm::legacy::FunctionPassManager>(llvm_module.get());
 
     llvm_builder = std::make_unique<llvm::IRBuilder<>>(llvm_module->getContext());

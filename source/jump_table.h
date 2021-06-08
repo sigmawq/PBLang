@@ -199,7 +199,8 @@ public:
                 case ANY_OF_SEQUENCE:
                     if (r.container.size() != 2) throw std::runtime_error("A rule is defined by sequence, but it's container"
                                                                           "size is != 2");
-                    for (char i = r.container[0]; i < r.container[1]; i++){
+                    // !!!!!!
+                    for (char i = r.container[0]; i <= r.container[1]; i++){
                         char_group_allowed.push_back(i);
                     }
                     break;
